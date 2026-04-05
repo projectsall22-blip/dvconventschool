@@ -25,10 +25,10 @@ const getNextClass = (currentClass, passed) => {
 
 // Dynamic font scale based on subject count
 const scaledFont = (base, count) => {
-  if (count <= 6)  return base;
-  if (count <= 8)  return base - 0.5;
-  if (count <= 10) return base - 1;
-  return base - 1.5;
+  if (count <= 6)  return base + 3.5;
+  if (count <= 8)  return base + 2.5;
+  if (count <= 10) return base + 1.5;
+  return base + 0.5;
 };
 
 const gradeFromPercent = (p) => {
@@ -71,7 +71,7 @@ const BarChartTerm = ({ subjects, termKey, color, label }) => {
         <g key={v}>
           <line x1={24} x2={W} y1={H - (v / 100) * H} y2={H - (v / 100) * H}
             stroke={v === 0 ? '#9ca3af' : '#e5e7eb'} strokeWidth={v === 0 ? 1 : 0.5} />
-          <text x={20} y={H - (v / 100) * H + 3} textAnchor="end" fontSize="6" fill="#9ca3af">{v}</text>
+          <text x={20} y={H - (v / 100) * H + 3} textAnchor="end" fontSize="8" fill="#9ca3af">{v}</text>
         </g>
       ))}
       {subjects.map((sub, i) => {
@@ -87,18 +87,18 @@ const BarChartTerm = ({ subjects, termKey, color, label }) => {
             <rect x={x + 2} y={H - h + 2} width={BAR_W} height={h} fill="rgba(0,0,0,0.06)" rx="3" />
             <rect x={x} y={H - h} width={BAR_W} height={h} fill={color || barColor} rx="3" />
             {val > 0 && (
-              <text x={x + BAR_W / 2} y={H - h - 3} textAnchor="middle" fontSize="7" fill="#374151" fontWeight="700">
+              <text x={x + BAR_W / 2} y={H - h - 3} textAnchor="middle" fontSize="9" fill="#374151" fontWeight="700">
                 {val}
               </text>
             )}
-            <text x={x + BAR_W / 2} y={H + 12} textAnchor="middle" fontSize="7" fill="#374151">
+            <text x={x + BAR_W / 2} y={H + 12} textAnchor="middle" fontSize="9" fill="#374151">
               {sub.subjectName?.substring(0, 5) || ''}
             </text>
           </g>
         );
       })}
       <rect x={26} y={H + 20} width={8} height={8} fill={color || '#2563eb'} rx="2" />
-      <text x={38} y={H + 27} fontSize="7" fill="#374151" fontWeight="600">{label}</text>
+      <text x={38} y={H + 27} fontSize="9" fill="#374151" fontWeight="600">{label}</text>
     </svg>
   );
 };
@@ -168,7 +168,7 @@ const TermMarksheet = ({ student, termKey, termLabel, schoolInfo, academicYear }
   return (
     <div className="marksheet-page bg-white" style={{
       width: '210mm', height: '297mm', margin: '0 auto', padding: '7mm 9mm',
-      fontFamily: '"Times New Roman", Times, serif', fontSize: '11px',
+      fontFamily: '"Times New Roman", Times, serif', fontSize: '12px',
       boxSizing: 'border-box', pageBreakAfter: 'always', position: 'relative',
       background: '#fff', display: 'flex', flexDirection: 'column', overflow: 'hidden',
     }}>
@@ -188,33 +188,80 @@ const TermMarksheet = ({ student, termKey, termLabel, schoolInfo, academicYear }
       <div style={{ position: 'relative', zIndex: 1, flex: 1, display: 'flex', flexDirection: 'column' }}>
 
         {/* ══ HEADER ══ */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '8px', paddingBottom: '8px', borderBottom: `2px solid ${BLUE}` }}>
-          <img src={schoolInfo.schoolLogo || schoolLogo} alt="logo"
-            style={{ width: '66px', height: '66px', objectFit: 'contain', flexShrink: 0 }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px', paddingBottom: '8px', borderBottom: `3px double ${BLUE}` }}>
+          {/* Left logo with decorative ring */}
+          <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            width: '80px', height: '80px', borderRadius: '50%',
+            background: `radial-gradient(circle, #e8edf7 60%, #c7d2e8 100%)`,
+            border: `3px solid ${BLUE}`, boxShadow: '0 2px 8px rgba(26,58,107,0.25)',
+            padding: '4px',
+          }}>
+            <img src={schoolInfo.schoolLogo || schoolLogo} alt="logo"
+              style={{ width: '68px', height: '68px', objectFit: 'contain', borderRadius: '50%' }} />
+          </div>
+
+          {/* Center school info */}
           <div style={{ flex: 1, textAlign: 'center' }}>
-            <div style={{ fontSize: '23px', fontWeight: '900', color: BLUE, fontFamily: 'Arial, sans-serif', letterSpacing: '-0.5px', lineHeight: 1.1 }}>
-              {schoolInfo.schoolName}
+            {/* School name with decorative lines */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '3px' }}>
+              <div style={{ flex: 1, height: '1.5px', background: `linear-gradient(to right, transparent, ${BLUE})` }} />
+              <div style={{
+                fontSize: '24px', fontWeight: '900', color: BLUE,
+                fontFamily: 'Georgia, "Times New Roman", serif',
+                letterSpacing: '1px', lineHeight: 1.15,
+                textShadow: '0 1px 2px rgba(26,58,107,0.15)',
+              }}>
+                {schoolInfo.schoolName}
+              </div>
+              <div style={{ flex: 1, height: '1.5px', background: `linear-gradient(to left, transparent, ${BLUE})` }} />
             </div>
-            <div style={{ fontSize: '10px', color: '#4b5563', marginTop: '3px', fontFamily: 'Arial, sans-serif' }}>
-              {schoolInfo.schoolSlogan || 'Affiliated to Central Board of Secondary Education'}
+
+            {/* Slogan */}
+            <div style={{
+              fontSize: '11px', color: '#1e4d8c', fontFamily: 'Georgia, serif',
+              fontStyle: 'italic', letterSpacing: '0.5px', marginBottom: '3px',
+            }}>
+              ❝ {schoolInfo.schoolSlogan || 'Affiliated to Central Board of Secondary Education'} ❞
             </div>
+
+            {/* Affiliation + code row */}
             {schoolInfo.affiliationNumber && (
-              <div style={{ fontSize: '9.5px', color: '#6b7280', marginTop: '1px' }}>
-                Affiliation No.: <b>{schoolInfo.affiliationNumber}</b>
-                {schoolInfo.schoolCode ? <span>&nbsp;&nbsp;|&nbsp;&nbsp;School Code: <b>{schoolInfo.schoolCode}</b></span> : ''}
+              <div style={{
+                display: 'inline-flex', gap: '12px', fontSize: '9px', color: '#374151',
+                background: '#e8edf7', borderRadius: '20px', padding: '2px 14px',
+                border: `1px solid #c7d2e8`, marginBottom: '3px',
+              }}>
+                <span>Affil. No.: <b style={{ color: BLUE }}>{schoolInfo.affiliationNumber}</b></span>
+                {schoolInfo.schoolCode && <span>|&nbsp; School Code: <b style={{ color: BLUE }}>{schoolInfo.schoolCode}</b></span>}
               </div>
             )}
-            <div style={{ fontSize: '9.5px', color: '#6b7280' }}>{schoolInfo.schoolAddress}</div>
+
+            {/* Address */}
+            <div style={{
+              fontSize: '10px', color: '#4b5563',
+              fontFamily: 'Arial, sans-serif', letterSpacing: '0.3px',
+            }}>
+              📍 {schoolInfo.schoolAddress}
+            </div>
           </div>
-          <img src={schoolInfo.schoolLogo || schoolLogo} alt="logo2"
-            style={{ width: '66px', height: '66px', objectFit: 'contain', flexShrink: 0 }} />
+
+          {/* Right logo with decorative ring */}
+          <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            width: '80px', height: '80px', borderRadius: '50%',
+            background: `radial-gradient(circle, #e8edf7 60%, #c7d2e8 100%)`,
+            border: `3px solid ${BLUE}`, boxShadow: '0 2px 8px rgba(26,58,107,0.25)',
+            padding: '4px',
+          }}>
+            <img src={schoolInfo.schoolLogo || schoolLogo} alt="logo2"
+              style={{ width: '68px', height: '68px', objectFit: 'contain', borderRadius: '50%' }} />
+          </div>
         </div>
 
         {/* ══ TITLE BAND ══ */}
         <div style={{
           background: `linear-gradient(135deg, ${BLUE} 0%, #1e4d8c 100%)`,
           color: 'white', textAlign: 'center', padding: '6px 12px',
-          fontSize: '13px', fontWeight: '900', letterSpacing: '3px',
+          fontSize: '15px', fontWeight: '900', letterSpacing: '3px',
           marginBottom: '10px', fontFamily: 'Arial, sans-serif',
           borderRadius: '3px', boxShadow: '0 2px 6px rgba(26,58,107,0.3)',
         }}>
@@ -227,39 +274,39 @@ const TermMarksheet = ({ student, termKey, termLabel, schoolInfo, academicYear }
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <tbody>
                 <tr>
-                  <td style={{ fontSize: '10px', paddingBottom: '4px', width: '52%' }}>
-                    <span style={{ color: '#6b7280', fontSize: '9px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Admission No.</span><br />
-                    <b style={{ fontSize: '11px', color: '#111827' }}>{student.admissionNo || student.UID || '—'}</b>
+                  <td style={{ fontSize: '11px', paddingBottom: '4px', width: '52%' }}>
+                    <span style={{ color: '#6b7280', fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Admission No.</span><br />
+                    <b style={{ fontSize: '12px', color: '#111827' }}>{student.admissionNo || student.UID || '—'}</b>
                   </td>
-                  <td style={{ fontSize: '10px', paddingBottom: '4px' }}>
-                    <span style={{ color: '#6b7280', fontSize: '9px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Class &amp; Sec.</span><br />
-                    <b style={{ fontSize: '11px', color: '#111827' }}>{student.class || '—'}</b>
-                  </td>
-                </tr>
-                <tr>
-                  <td style={{ fontSize: '10px', paddingBottom: '4px' }} colSpan={2}>
-                    <span style={{ color: '#6b7280', fontSize: '9px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Student Name</span><br />
-                    <b style={{ fontSize: '12px', color: BLUE }}>{student.name}</b>
+                  <td style={{ fontSize: '11px', paddingBottom: '4px' }}>
+                    <span style={{ color: '#6b7280', fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Class &amp; Sec.</span><br />
+                    <b style={{ fontSize: '12px', color: '#111827' }}>{student.class || '—'}</b>
                   </td>
                 </tr>
                 <tr>
-                  <td style={{ fontSize: '10px', paddingBottom: '3px' }}>
-                    <span style={{ color: '#6b7280', fontSize: '9px' }}>Mother's Name</span><br />
-                    <span style={{ fontSize: '10.5px' }}>{student.motherName || '—'}</span>
-                  </td>
-                  <td style={{ fontSize: '10px', paddingBottom: '3px' }}>
-                    <span style={{ color: '#6b7280', fontSize: '9px' }}>Date of Birth</span><br />
-                    <span style={{ fontSize: '10.5px' }}>{student.dob ? fmt(student.dob) : '—'}</span>
+                  <td style={{ fontSize: '11px', paddingBottom: '4px' }} colSpan={2}>
+                    <span style={{ color: '#6b7280', fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Student Name</span><br />
+                    <b style={{ fontSize: '14px', color: BLUE }}>{student.name}</b>
                   </td>
                 </tr>
                 <tr>
-                  <td style={{ fontSize: '10px', paddingBottom: '3px' }}>
-                    <span style={{ color: '#6b7280', fontSize: '9px' }}>Father's Name</span><br />
-                    <span style={{ fontSize: '10.5px' }}>{student.fatherName || '—'}</span>
+                  <td style={{ fontSize: '11px', paddingBottom: '3px' }}>
+                    <span style={{ color: '#6b7280', fontSize: '10px' }}>Mother's Name</span><br />
+                    <span style={{ fontSize: '11.5px' }}>{student.motherName || '—'}</span>
                   </td>
-                  <td style={{ fontSize: '10px' }}>
-                    <span style={{ color: '#6b7280', fontSize: '9px' }}>Address</span><br />
-                    <span style={{ fontSize: '10px' }}>{student.address || '—'}</span>
+                  <td style={{ fontSize: '11px', paddingBottom: '3px' }}>
+                    <span style={{ color: '#6b7280', fontSize: '10px' }}>Date of Birth</span><br />
+                    <span style={{ fontSize: '11.5px' }}>{student.dob ? fmt(student.dob) : '—'}</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td style={{ fontSize: '11px', paddingBottom: '3px' }}>
+                    <span style={{ color: '#6b7280', fontSize: '10px' }}>Father's Name</span><br />
+                    <span style={{ fontSize: '11.5px' }}>{student.fatherName || '—'}</span>
+                  </td>
+                  <td style={{ fontSize: '11px' }}>
+                    <span style={{ color: '#6b7280', fontSize: '10px' }}>Address</span><br />
+                    <span style={{ fontSize: '11px' }}>{student.address || '—'}</span>
                   </td>
                 </tr>
               </tbody>
@@ -287,7 +334,7 @@ const TermMarksheet = ({ student, termKey, termLabel, schoolInfo, academicYear }
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '5px' }}>
           <div style={{ flex: 1, height: '1px', background: '#c7d2e8' }} />
           <div style={{
-            textAlign: 'center', fontWeight: '900', fontSize: '12px',
+            textAlign: 'center', fontWeight: '900', fontSize: '13px',
             fontFamily: 'Arial, sans-serif', color: BLUE, letterSpacing: '1px', padding: '0 10px',
           }}>
             ✦ Scholastic Area — {termLabel} ✦
@@ -299,12 +346,12 @@ const TermMarksheet = ({ student, termKey, termLabel, schoolInfo, academicYear }
         <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '10px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
           <thead>
             <tr>
-              <TH rowSpan={2} style={{ width: '130px', fontSize: '10px', letterSpacing: '0.5px' }}>SUBJECTS</TH>
+              <TH rowSpan={2} style={{ width: '130px', fontSize: '12px', letterSpacing: '0.5px' }}>SUBJECTS</TH>
               <TH style={{ background: '#1e4080' }}>Periodic{'\n'}Test{'\n'}(10)</TH>
               <TH style={{ background: '#1e4080' }}>Note{'\n'}Books{'\n'}(5)</TH>
               <TH style={{ background: '#1e4080' }}>Sub.{'\n'}Enrl.{'\n'}(5)</TH>
               <TH style={{ background: '#1e4080' }}>{isT1 ? 'Half Yearly\nExam\n(80)' : 'Final\nExam\n(80)'}</TH>
-              <TH style={{ background: '#14326e', fontSize: '9px' }}>Marks{'\n'}Obtained{'\n'}(100)</TH>
+              <TH style={{ background: '#14326e', fontSize: '11px' }}>Marks{'\n'}Obtained{'\n'}(100)</TH>
               <TH style={{ background: '#14326e' }}>Grade</TH>
             </tr>
           </thead>
@@ -317,7 +364,7 @@ const TermMarksheet = ({ student, termKey, termLabel, schoolInfo, academicYear }
               return (
                 <tr key={i} style={{ background: i % 2 === 0 ? '#f8faff' : '#ffffff' }}>
                   <td style={{
-                    border: '1px solid #c7d2e8', padding: rowPad, fontSize: `${fs(10.5)}px`,
+                    border: '1px solid #c7d2e8', padding: rowPad, fontSize: `${fs(11.5)}px`,
                     fontWeight: '700', fontFamily: 'Arial, sans-serif', color: '#1f2937',
                     borderLeft: `3px solid ${ACCENT}`,
                   }}>
@@ -328,14 +375,14 @@ const TermMarksheet = ({ student, termKey, termLabel, schoolInfo, academicYear }
                   <TD>{t?.subEnrichment}</TD>
                   <TD>{isT1 ? t?.halfYearlyExam : t?.yearlyExam}</TD>
                   <TD style={{
-                    fontWeight: '800', fontSize: '11px',
+                    fontWeight: '800', fontSize: '12px',
                     color: failed ? '#dc2626' : '#111827',
                     background: failed ? '#fef2f2' : 'transparent',
                   }}>
                     {total ?? <span style={{ color: '#d1d5db' }}>—</span>}
                   </TD>
                   <TD style={{
-                    fontWeight: '900', fontSize: '11px',
+                    fontWeight: '900', fontSize: '12px',
                     color: gradeColor(grade),
                     background: grade ? gradeBg(grade) : 'transparent',
                   }}>
@@ -347,22 +394,22 @@ const TermMarksheet = ({ student, termKey, termLabel, schoolInfo, academicYear }
           </tbody>
           <tfoot>
             <tr style={{ background: '#e8edf7' }}>
-              <td colSpan={5} style={{ border: `1px solid ${BLUE}`, padding: '5px 10px', fontWeight: '900', fontSize: '11px', textAlign: 'right', fontFamily: 'Arial, sans-serif', color: BLUE }}>
+              <td colSpan={5} style={{ border: `1px solid ${BLUE}`, padding: '5px 10px', fontWeight: '900', fontSize: '12px', textAlign: 'right', fontFamily: 'Arial, sans-serif', color: BLUE }}>
                 Grand Total
               </td>
-              <td style={{ border: `1px solid ${BLUE}`, padding: '4px 6px', fontWeight: '900', fontSize: '12px', textAlign: 'center', color: BLUE }}>
+              <td style={{ border: `1px solid ${BLUE}`, padding: '4px 6px', fontWeight: '900', fontSize: '13px', textAlign: 'center', color: BLUE }}>
                 {grandTotal}/{grandMax}
               </td>
               <td style={{ border: `1px solid ${BLUE}` }} />
             </tr>
             <tr style={{ background: BLUE }}>
-              <td colSpan={4} style={{ border: `1px solid ${BLUE}`, padding: '4px 10px', fontWeight: '900', fontSize: '11px', textAlign: 'right', color: 'white', fontFamily: 'Arial, sans-serif' }}>
+              <td colSpan={4} style={{ border: `1px solid ${BLUE}`, padding: '4px 10px', fontWeight: '900', fontSize: '12px', textAlign: 'right', color: 'white', fontFamily: 'Arial, sans-serif' }}>
                 Percentage
               </td>
-              <td style={{ border: `1px solid ${BLUE}`, padding: '4px 8px', fontWeight: '900', fontSize: '13px', textAlign: 'center', color: '#fcd34d' }}>
+              <td style={{ border: `1px solid ${BLUE}`, padding: '4px 8px', fontWeight: '900', fontSize: '14px', textAlign: 'center', color: '#fcd34d' }}>
                 {percentage}%
               </td>
-              <td style={{ border: `1px solid ${BLUE}`, padding: '4px 6px', fontWeight: '900', fontSize: '13px', textAlign: 'center', color: '#fcd34d' }}>
+              <td style={{ border: `1px solid ${BLUE}`, padding: '4px 6px', fontWeight: '900', fontSize: '14px', textAlign: 'center', color: '#fcd34d' }}>
                 {overallGrade}
               </td>
               <td style={{ border: `1px solid ${BLUE}` }} />
@@ -373,8 +420,8 @@ const TermMarksheet = ({ student, termKey, termLabel, schoolInfo, academicYear }
         {/* ══ CO-SCHOLASTIC ══ */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '5px' }}>
           <div style={{ flex: 1, height: '1px', background: '#c7d2e8' }} />
-          <div style={{ textAlign: 'center', fontWeight: '900', fontSize: '11px', fontFamily: 'Arial, sans-serif', color: BLUE, padding: '0 10px', letterSpacing: '0.5px' }}>
-            ✦ Co-Scholastic Area <span style={{ fontWeight: '400', fontSize: '8.5px', color: '#6b7280' }}>[on a 3 point (A–C) scale]</span> ✦
+          <div style={{ textAlign: 'center', fontWeight: '900', fontSize: '12px', fontFamily: 'Arial, sans-serif', color: BLUE, padding: '0 10px', letterSpacing: '0.5px' }}>
+            ✦ Co-Scholastic Area <span style={{ fontWeight: '400', fontSize: '10px', color: '#6b7280' }}>[on a 3 point (A–C) scale]</span> ✦
           </div>
           <div style={{ flex: 1, height: '1px', background: '#c7d2e8' }} />
         </div>
@@ -382,8 +429,8 @@ const TermMarksheet = ({ student, termKey, termLabel, schoolInfo, academicYear }
         <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '6px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
           <thead>
             <tr>
-              <th style={{ border: `1px solid ${BLUE}`, padding: '4px 8px', fontSize: '9.5px', fontWeight: '800', background: BLUE, color: 'white', textAlign: 'left', letterSpacing: '0.4px' }}>Activity</th>
-              <th style={{ border: `1px solid ${BLUE}`, padding: '4px 8px', fontSize: '9.5px', fontWeight: '800', background: BLUE, color: 'white', textAlign: 'center', width: '80px' }}>Grade</th>
+              <th style={{ border: `1px solid ${BLUE}`, padding: '4px 8px', fontSize: '11px', fontWeight: '800', background: BLUE, color: 'white', textAlign: 'left', letterSpacing: '0.4px' }}>Activity</th>
+              <th style={{ border: `1px solid ${BLUE}`, padding: '4px 8px', fontSize: '11px', fontWeight: '800', background: BLUE, color: 'white', textAlign: 'center', width: '80px' }}>Grade</th>
             </tr>
           </thead>
           <tbody>
@@ -393,20 +440,20 @@ const TermMarksheet = ({ student, termKey, termLabel, schoolInfo, academicYear }
               ['Health & Physical Education', 'healthPhysical'],
             ].map(([lbl, key], idx) => (
               <tr key={key} style={{ background: idx % 2 === 0 ? '#f8faff' : '#fff' }}>
-                <td style={{ border: '1px solid #c7d2e8', padding: '4px 8px', fontSize: '9.5px', borderLeft: `3px solid #6d28d9` }}>
+                <td style={{ border: '1px solid #c7d2e8', padding: '4px 8px', fontSize: '11px', borderLeft: `3px solid #6d28d9` }}>
                   <span style={{ color: '#374151', fontWeight: '600' }}>{lbl}</span>
                 </td>
-                <td style={{ border: '1px solid #c7d2e8', padding: '4px', textAlign: 'center', fontSize: '11px', fontWeight: '900', color: '#15803d', background: '#f0fdf4' }}>
+                <td style={{ border: '1px solid #c7d2e8', padding: '4px', textAlign: 'center', fontSize: '12px', fontWeight: '900', color: '#15803d', background: '#f0fdf4' }}>
                   {coScholastic[key]?.[termKey] || 'A'}
                 </td>
               </tr>
             ))}
             <tr style={{ background: '#f8faff' }}>
-              <td style={{ border: '1px solid #c7d2e8', padding: '4px 8px', fontSize: '9.5px', borderLeft: `3px solid #6d28d9` }}>
+              <td style={{ border: '1px solid #c7d2e8', padding: '4px 8px', fontSize: '11px', borderLeft: `3px solid #6d28d9` }}>
                 <span style={{ color: '#374151', fontWeight: '600' }}>Discipline</span>
-                <span style={{ fontWeight: '400', fontSize: '8.5px', color: '#9ca3af', marginLeft: '4px' }}>[on a 3 point (A-C) scale]</span>
+                <span style={{ fontWeight: '400', fontSize: '10px', color: '#9ca3af', marginLeft: '4px' }}>[on a 3 point (A-C) scale]</span>
               </td>
-              <td style={{ border: '1px solid #c7d2e8', padding: '4px', textAlign: 'center', fontSize: '11px', fontWeight: '900', color: '#15803d', background: '#f0fdf4' }}>
+              <td style={{ border: '1px solid #c7d2e8', padding: '4px', textAlign: 'center', fontSize: '12px', fontWeight: '900', color: '#15803d', background: '#f0fdf4' }}>
                 {coScholastic.discipline?.[termKey] || 'A'}
               </td>
             </tr>
@@ -420,15 +467,15 @@ const TermMarksheet = ({ student, termKey, termLabel, schoolInfo, academicYear }
             background: BLUE_LIGHT, border: `1.5px solid #93afd4`,
             borderRadius: '4px', padding: '6px 12px',
           }}>
-            <span style={{ fontSize: '9.5px', fontWeight: '800', color: BLUE, textTransform: 'uppercase', letterSpacing: '0.5px', flexShrink: 0 }}>Attendance</span>
-            <span style={{ fontSize: '9px', color: '#6b7280' }}>Present:</span>
-            <span style={{ fontSize: '13px', fontWeight: '900', color: BLUE, minWidth: '24px', textAlign: 'center' }}>{attendance.presentDays ?? '—'}</span>
-            <span style={{ fontSize: '9px', color: '#d1d5db' }}>|</span>
-            <span style={{ fontSize: '9px', color: '#6b7280' }}>Total Days:</span>
-            <span style={{ fontSize: '13px', fontWeight: '900', color: BLUE, minWidth: '24px', textAlign: 'center' }}>{attendance.totalWorkingDays ?? '—'}</span>
-            <span style={{ fontSize: '9px', color: '#d1d5db' }}>|</span>
-            <span style={{ fontSize: '9px', color: '#6b7280' }}>Percentage:</span>
-            <span style={{ fontSize: '13px', fontWeight: '900', minWidth: '40px', textAlign: 'center',
+            <span style={{ fontSize: '11px', fontWeight: '800', color: BLUE, textTransform: 'uppercase', letterSpacing: '0.5px', flexShrink: 0 }}>Attendance</span>
+            <span style={{ fontSize: '10px', color: '#6b7280' }}>Present:</span>
+            <span style={{ fontSize: '14px', fontWeight: '900', color: BLUE, minWidth: '24px', textAlign: 'center' }}>{attendance.presentDays ?? '—'}</span>
+            <span style={{ fontSize: '10px', color: '#d1d5db' }}>|</span>
+            <span style={{ fontSize: '10px', color: '#6b7280' }}>Total Days:</span>
+            <span style={{ fontSize: '14px', fontWeight: '900', color: BLUE, minWidth: '24px', textAlign: 'center' }}>{attendance.totalWorkingDays ?? '—'}</span>
+            <span style={{ fontSize: '10px', color: '#d1d5db' }}>|</span>
+            <span style={{ fontSize: '10px', color: '#6b7280' }}>Percentage:</span>
+            <span style={{ fontSize: '14px', fontWeight: '900', minWidth: '40px', textAlign: 'center',
               color: attendance.presentDays && attendance.totalWorkingDays
                 ? ((attendance.presentDays / attendance.totalWorkingDays) * 100) >= 75 ? '#15803d' : '#dc2626'
                 : BLUE }}>
@@ -444,8 +491,8 @@ const TermMarksheet = ({ student, termKey, termLabel, schoolInfo, academicYear }
           border: `1.5px solid #c7d2e8`, borderRadius: '4px', padding: '6px 12px',
           marginBottom: '8px', background: '#fffbeb', borderLeft: `3px solid #f59e0b`,
         }}>
-          <span style={{ fontSize: '9.5px', fontWeight: '800', color: '#b45309', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Class Teacher's Remark: </span>
-          <span style={{ fontSize: '10px', color: '#374151' }}>{remark}</span>
+          <span style={{ fontSize: '11px', fontWeight: '800', color: '#b45309', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Class Teacher's Remark: </span>
+          <span style={{ fontSize: '11px', color: '#374151' }}>{remark}</span>
         </div>
 
         {/* ══ RESULT ══ */}
@@ -456,15 +503,15 @@ const TermMarksheet = ({ student, termKey, termLabel, schoolInfo, academicYear }
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         }}>
           <div>
-            <div style={{ fontSize: '10.5px', fontWeight: '800', color: pctNum >= 33 ? '#166534' : '#991b1b' }}>
+            <div style={{ fontSize: '12px', fontWeight: '800', color: pctNum >= 33 ? '#166534' : '#991b1b' }}>
               {resultQualified}
             </div>
-            <div style={{ fontSize: '9.5px', color: '#6b7280', marginTop: '2px' }}>
+            <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '2px' }}>
               Place: {schoolInfo.schoolAddress || '—'} &nbsp;|&nbsp; Date: {today}
             </div>
           </div>
           <div style={{
-            fontSize: '16px', fontWeight: '900', letterSpacing: '2px',
+            fontSize: '17px', fontWeight: '900', letterSpacing: '2px',
             color: pctNum >= 33 ? '#166534' : '#991b1b',
             border: `2px solid ${pctNum >= 33 ? '#86efac' : '#fca5a5'}`,
             padding: '4px 16px', borderRadius: '4px', background: 'white',
@@ -483,7 +530,7 @@ const TermMarksheet = ({ student, termKey, termLabel, schoolInfo, academicYear }
             {["Parent's Signature", "Class Teacher's Signature"].map(sig => (
               <div key={sig} style={{ textAlign: 'center', flex: 1, padding: '0 8px' }}>
                 <div style={{ height: '44px', borderBottom: `1.5px solid #374151`, marginBottom: '4px' }} />
-                <div style={{ fontSize: '9.5px', color: '#374151', fontFamily: 'Arial, sans-serif', fontWeight: '600' }}>{sig}</div>
+                <div style={{ fontSize: '11px', color: '#374151', fontFamily: 'Arial, sans-serif', fontWeight: '600' }}>{sig}</div>
               </div>
             ))}
             <div style={{ textAlign: 'center', flex: 1, padding: '0 8px' }}>
@@ -493,47 +540,31 @@ const TermMarksheet = ({ student, termKey, termLabel, schoolInfo, academicYear }
               }}>
                 <img src={principalSign} alt="Principal Signature" style={{ maxHeight: '40px', maxWidth: '100%', objectFit: 'contain', marginBottom: '2px' }} />
               </div>
-              <div style={{ fontSize: '9.5px', color: '#374151', fontFamily: 'Arial, sans-serif', fontWeight: '600' }}>Principal's Signature</div>
+              <div style={{ fontSize: '11px', color: '#374151', fontFamily: 'Arial, sans-serif', fontWeight: '600' }}>Principal's Signature</div>
             </div>
           </div>
 
-          {/* ══ GRADING SCALE + BAR CHART ══ */}
-          <div style={{ display: 'flex', gap: '12px', borderTop: `2px solid ${BLUE}`, paddingTop: '8px' }}>
-            <div style={{ flexShrink: 0 }}>
-              <div style={{ fontSize: '9px', fontWeight: '800', marginBottom: '4px', color: BLUE, fontFamily: 'Arial, sans-serif', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                Grading Scale
-              </div>
-              <table style={{ borderCollapse: 'collapse', fontSize: '8.5px' }}>
-                <thead>
-                  <tr>
-                    <th style={{ border: `1px solid ${BLUE}`, padding: '3px 8px', background: BLUE, color: 'white', fontWeight: '800' }}>MARKS</th>
-                    <th style={{ border: `1px solid ${BLUE}`, padding: '3px 8px', background: BLUE, color: 'white', fontWeight: '800' }}>GRADE</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {[['91-100','A1'],['81-90','A2'],['71-80','B1'],['61-70','B2'],
-                    ['51-60','C1'],['41-50','C2'],['33-40','D'],['32 & Below','E']].map(([r, g], i) => (
-                    <tr key={g} style={{ background: i % 2 === 0 ? '#f8faff' : 'white' }}>
-                      <td style={{ border: '1px solid #c7d2e8', padding: '2px 8px', textAlign: 'center' }}>{r}</td>
-                      <td style={{ border: '1px solid #c7d2e8', padding: '2px 8px', textAlign: 'center', fontWeight: '900', color: gradeColor(g), background: gradeBg(g) }}>{g}</td>
-                    </tr>
+          {/* ══ GRADING SCALE — horizontal ══ */}
+          <div style={{ borderTop: `2px solid ${BLUE}`, paddingTop: '8px' }}>
+            <div style={{ fontSize: '11px', fontWeight: '800', marginBottom: '5px', color: BLUE, fontFamily: 'Arial, sans-serif', textTransform: 'uppercase', letterSpacing: '0.5px', textAlign: 'center' }}>
+              Grading Scale
+            </div>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
+              <thead>
+                <tr>
+                  {[['91-100','A1'],['81-90','A2'],['71-80','B1'],['61-70','B2'],['51-60','C1'],['41-50','C2'],['33-40','D'],['32 & Below','E']].map(([r]) => (
+                    <th key={r} style={{ border: `1px solid ${BLUE}`, padding: '3px 4px', background: BLUE, color: 'white', fontWeight: '800', textAlign: 'center' }}>{r}</th>
                   ))}
-                  <tr>
-                    <td colSpan={2} style={{ border: '1px solid #c7d2e8', padding: '2px 6px', fontSize: '7.5px', color: '#dc2626', fontWeight: '700', textAlign: 'center', background: '#fff5f5' }}>
-                      E = Needs Improvement
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <div style={{ flex: 1, overflow: 'hidden' }}>
-              <div style={{ fontSize: '9px', fontWeight: '800', marginBottom: '4px', color: BLUE, fontFamily: 'Arial, sans-serif', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                Subject-wise Performance — {termLabel}
-              </div>
-              <div style={{ overflowX: 'auto' }}>
-                <BarChartTerm subjects={enriched} termKey={termKey} color={isT1 ? '#1e3a8a' : '#d97706'} label={termLabel} />
-              </div>
-            </div>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  {[['91-100','A1'],['81-90','A2'],['71-80','B1'],['61-70','B2'],['51-60','C1'],['41-50','C2'],['33-40','D'],['32 & Below','E']].map(([, g]) => (
+                    <td key={g} style={{ border: '1px solid #c7d2e8', padding: '3px 4px', textAlign: 'center', fontWeight: '900', fontSize: '12px', color: gradeColor(g), background: gradeBg(g) }}>{g}</td>
+                  ))}
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
 
@@ -591,7 +622,7 @@ const CombinedMarksheet = ({ student, schoolInfo, academicYear }) => {
 
   const TH = ({ children, colSpan, rowSpan, style = {} }) => (
     <th colSpan={colSpan} rowSpan={rowSpan} style={{
-      border: `1px solid ${BLUE}`, padding: rowPad, fontSize: `${fs(8)}px`,
+      border: `1px solid ${BLUE}`, padding: rowPad, fontSize: `${fs(10)}px`,
       fontWeight: '800', textAlign: 'center', background: BLUE, color: 'white',
       whiteSpace: 'pre-line', verticalAlign: 'middle', letterSpacing: '0.3px', ...style,
     }}>{children}</th>
@@ -599,20 +630,17 @@ const CombinedMarksheet = ({ student, schoolInfo, academicYear }) => {
 
   const TD = ({ children, style = {} }) => (
     <td style={{
-      border: '1px solid #c7d2e8', padding: rowPad, fontSize: `${fs(9.5)}px`,
+      border: '1px solid #c7d2e8', padding: rowPad, fontSize: `${fs(11.5)}px`,
       textAlign: 'center', verticalAlign: 'middle', ...style,
     }}>
       {children === null || children === undefined ? <span style={{ color: '#d1d5db' }}>—</span> : children}
     </td>
   );
 
-  const BAR_W = 13, GAP = 3, H = 75, LABEL_H = 26;
-  const chartW = enriched.length * (BAR_W * 2 + GAP + 6) + 34;
-
   return (
     <div className="marksheet-page bg-white" style={{
       width: '210mm', height: '297mm', margin: '0 auto', padding: '6mm 8mm',
-      fontFamily: '"Times New Roman", Times, serif', fontSize: '10.5px',
+      fontFamily: '"Times New Roman", Times, serif', fontSize: '15.5px',
       boxSizing: 'border-box', pageBreakAfter: 'always', position: 'relative',
       display: 'flex', flexDirection: 'column', overflow: 'hidden',
     }}>
@@ -627,31 +655,71 @@ const CombinedMarksheet = ({ student, schoolInfo, academicYear }) => {
       <div style={{ position: 'relative', zIndex: 1, flex: 1, display: 'flex', flexDirection: 'column' }}>
 
         {/* HEADER */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '7px', paddingBottom: '7px', borderBottom: `2px solid ${BLUE}` }}>
-          <img src={schoolInfo.schoolLogo || schoolLogo} alt="logo" style={{ width: '62px', height: '62px', objectFit: 'contain', flexShrink: 0 }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '7px', paddingBottom: '7px', borderBottom: `3px double ${BLUE}` }}>
+          {/* Left logo */}
+          <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            width: '78px', height: '78px', borderRadius: '50%',
+            background: `radial-gradient(circle, #e8edf7 60%, #c7d2e8 100%)`,
+            border: `3px solid ${BLUE}`, boxShadow: '0 2px 8px rgba(26,58,107,0.25)', padding: '4px',
+          }}>
+            <img src={schoolInfo.schoolLogo || schoolLogo} alt="logo"
+              style={{ width: '66px', height: '66px', objectFit: 'contain', borderRadius: '50%' }} />
+          </div>
+
+          {/* Center */}
           <div style={{ flex: 1, textAlign: 'center' }}>
-            <div style={{ fontSize: '21px', fontWeight: '900', color: BLUE, fontFamily: 'Arial, sans-serif', letterSpacing: '-0.5px', lineHeight: 1.1 }}>
-              {schoolInfo.schoolName}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '3px' }}>
+              <div style={{ flex: 1, height: '1.5px', background: `linear-gradient(to right, transparent, ${BLUE})` }} />
+              <div style={{
+                fontSize: '28px', fontWeight: '900', color: BLUE,
+                fontFamily: 'Georgia, "Times New Roman", serif',
+                letterSpacing: '1px', lineHeight: 1.15,
+                textShadow: '0 1px 2px rgba(26,58,107,0.15)',
+              }}>
+                {schoolInfo.schoolName}
+              </div>
+              <div style={{ flex: 1, height: '1.5px', background: `linear-gradient(to left, transparent, ${BLUE})` }} />
             </div>
-            <div style={{ fontSize: '9.5px', color: '#4b5563', marginTop: '2px' }}>
-              {schoolInfo.schoolSlogan || 'Affiliated to Central Board of Secondary Education'}
+
+            <div style={{
+              fontSize: '14px', color: '#1e4d8c', fontFamily: 'Georgia, serif',
+              fontStyle: 'italic', letterSpacing: '0.5px', marginBottom: '3px',
+            }}>
+              ❝ {schoolInfo.schoolSlogan || 'Affiliated to Central Board of Secondary Education'} ❞
             </div>
+
             {schoolInfo.affiliationNumber && (
-              <div style={{ fontSize: '9px', color: '#6b7280', marginTop: '1px' }}>
-                Affiliation No.: <b>{schoolInfo.affiliationNumber}</b>
-                {schoolInfo.schoolCode ? <span>&nbsp;|&nbsp;School Code: <b>{schoolInfo.schoolCode}</b></span> : ''}
+              <div style={{
+                display: 'inline-flex', gap: '12px', fontSize: '12.5px', color: '#374151',
+                background: '#e8edf7', borderRadius: '20px', padding: '2px 14px',
+                border: `1px solid #c7d2e8`, marginBottom: '3px',
+              }}>
+                <span>Affil. No.: <b style={{ color: BLUE }}>{schoolInfo.affiliationNumber}</b></span>
+                {schoolInfo.schoolCode && <span>|&nbsp; School Code: <b style={{ color: BLUE }}>{schoolInfo.schoolCode}</b></span>}
               </div>
             )}
-            <div style={{ fontSize: '9px', color: '#6b7280' }}>{schoolInfo.schoolAddress}</div>
+
+            <div style={{ fontSize: '13.5px', color: '#4b5563', fontFamily: 'Arial, sans-serif', letterSpacing: '0.3px' }}>
+              📍 {schoolInfo.schoolAddress}
+            </div>
           </div>
-          <img src={schoolInfo.schoolLogo || schoolLogo} alt="logo2" style={{ width: '62px', height: '62px', objectFit: 'contain', flexShrink: 0 }} />
+
+          {/* Right logo */}
+          <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            width: '78px', height: '78px', borderRadius: '50%',
+            background: `radial-gradient(circle, #e8edf7 60%, #c7d2e8 100%)`,
+            border: `3px solid ${BLUE}`, boxShadow: '0 2px 8px rgba(26,58,107,0.25)', padding: '4px',
+          }}>
+            <img src={schoolInfo.schoolLogo || schoolLogo} alt="logo2"
+              style={{ width: '66px', height: '66px', objectFit: 'contain', borderRadius: '50%' }} />
+          </div>
         </div>
 
         {/* TITLE */}
         <div style={{
           background: `linear-gradient(135deg, ${BLUE} 0%, #1e4d8c 100%)`,
           color: 'white', textAlign: 'center', padding: '5px 12px',
-          fontSize: '13px', fontWeight: '900', letterSpacing: '3px',
+          fontSize: '18px', fontWeight: '900', letterSpacing: '3px',
           marginBottom: '8px', fontFamily: 'Arial, sans-serif',
           borderRadius: '3px', boxShadow: '0 2px 6px rgba(26,58,107,0.3)',
         }}>
@@ -664,37 +732,37 @@ const CombinedMarksheet = ({ student, schoolInfo, academicYear }) => {
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <tbody>
                 <tr>
-                  <td style={{ fontSize: '9.5px', paddingBottom: '3px', width: '52%' }}>
-                    <span style={{ color: '#6b7280', fontSize: '8.5px', fontWeight: '700', textTransform: 'uppercase' }}>Admission No.</span><br />
-                    <b style={{ fontSize: '10.5px', color: '#111827' }}>{student.admissionNo || student.UID || '—'}</b>
+                  <td style={{ fontSize: '14.5px', paddingBottom: '3px', width: '52%' }}>
+                    <span style={{ color: '#6b7280', fontSize: '13.5px', fontWeight: '700', textTransform: 'uppercase' }}>Admission No.</span><br />
+                    <b style={{ fontSize: '15.5px', color: '#111827' }}>{student.admissionNo || student.UID || '—'}</b>
                   </td>
-                  <td style={{ fontSize: '9.5px', paddingBottom: '3px' }}>
-                    <span style={{ color: '#6b7280', fontSize: '8.5px', fontWeight: '700', textTransform: 'uppercase' }}>Class &amp; Sec.</span><br />
-                    <b style={{ fontSize: '10.5px', color: '#111827' }}>{student.class || '—'}</b>
-                  </td>
-                </tr>
-                <tr>
-                  <td colSpan={2} style={{ fontSize: '9.5px', paddingBottom: '3px' }}>
-                    <span style={{ color: '#6b7280', fontSize: '8.5px', fontWeight: '700', textTransform: 'uppercase' }}>Student Name</span><br />
-                    <b style={{ fontSize: '12px', color: BLUE }}>{student.name}</b>
+                  <td style={{ fontSize: '14.5px', paddingBottom: '3px' }}>
+                    <span style={{ color: '#6b7280', fontSize: '13.5px', fontWeight: '700', textTransform: 'uppercase' }}>Class &amp; Sec.</span><br />
+                    <b style={{ fontSize: '15.5px', color: '#111827' }}>{student.class || '—'}</b>
                   </td>
                 </tr>
                 <tr>
-                  <td style={{ fontSize: '9.5px', paddingBottom: '2px' }}>
-                    <span style={{ color: '#6b7280', fontSize: '8.5px' }}>Mother's Name: </span>
+                  <td colSpan={2} style={{ fontSize: '14.5px', paddingBottom: '3px' }}>
+                    <span style={{ color: '#6b7280', fontSize: '13.5px', fontWeight: '700', textTransform: 'uppercase' }}>Student Name</span><br />
+                    <b style={{ fontSize: '17px', color: BLUE }}>{student.name}</b>
+                  </td>
+                </tr>
+                <tr>
+                  <td style={{ fontSize: '14.5px', paddingBottom: '2px' }}>
+                    <span style={{ color: '#6b7280', fontSize: '13.5px' }}>Mother's Name: </span>
                     <span>{student.motherName || '—'}</span>
                   </td>
-                  <td style={{ fontSize: '9.5px' }}>
-                    <span style={{ color: '#6b7280', fontSize: '8.5px' }}>Father's Name: </span>
+                  <td style={{ fontSize: '14.5px' }}>
+                    <span style={{ color: '#6b7280', fontSize: '13.5px' }}>Father's Name: </span>
                     <span>{student.fatherName || '—'}</span>
                   </td>
                 </tr>
                 <tr>
-                  <td colSpan={2} style={{ fontSize: '9px' }}>
-                    <span style={{ color: '#6b7280', fontSize: '8.5px' }}>DOB: </span>
+                  <td colSpan={2} style={{ fontSize: '14px' }}>
+                    <span style={{ color: '#6b7280', fontSize: '13.5px' }}>DOB: </span>
                     <span>{student.dob ? fmt(student.dob) : '—'}</span>
                     &nbsp;&nbsp;&nbsp;
-                    <span style={{ color: '#6b7280', fontSize: '8.5px' }}>Address: </span>
+                    <span style={{ color: '#6b7280', fontSize: '13.5px' }}>Address: </span>
                     <span>{student.address || '—'}</span>
                   </td>
                 </tr>
@@ -717,7 +785,7 @@ const CombinedMarksheet = ({ student, schoolInfo, academicYear }) => {
         {/* SCHOLASTIC HEADING */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
           <div style={{ flex: 1, height: '1px', background: '#c7d2e8' }} />
-          <div style={{ fontWeight: '900', fontSize: '11px', fontFamily: 'Arial, sans-serif', color: BLUE, padding: '0 10px', letterSpacing: '0.5px' }}>
+          <div style={{ fontWeight: '900', fontSize: '16px', fontFamily: 'Arial, sans-serif', color: BLUE, padding: '0 10px', letterSpacing: '0.5px' }}>
             ✦ Scholastic Area ✦
           </div>
           <div style={{ flex: 1, height: '1px', background: '#c7d2e8' }} />
@@ -727,9 +795,9 @@ const CombinedMarksheet = ({ student, schoolInfo, academicYear }) => {
         <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '8px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
           <thead>
             <tr>
-              <TH rowSpan={2} style={{ width: '95px', fontSize: `${fs(9)}px` }}>SUBJECTS</TH>
-              <TH colSpan={6} style={{ background: '#1e3575', fontSize: `${fs(9)}px` }}>TERM - 1</TH>
-              <TH colSpan={6} style={{ background: '#7c2d12', fontSize: `${fs(9)}px` }}>TERM - 2</TH>
+              <TH rowSpan={2} style={{ width: '95px', fontSize: `${fs(11)}px` }}>SUBJECTS</TH>
+              <TH colSpan={6} style={{ background: '#1e3575', fontSize: `${fs(11)}px` }}>TERM - 1</TH>
+              <TH colSpan={6} style={{ background: '#7c2d12', fontSize: `${fs(11)}px` }}>TERM - 2</TH>
             </tr>
             <tr>
               <TH style={{ background: '#243d8a' }}>PT{'\n'}(10)</TH>
@@ -750,7 +818,7 @@ const CombinedMarksheet = ({ student, schoolInfo, academicYear }) => {
             {enriched.map((sub, i) => (
               <tr key={i} style={{ background: i % 2 === 0 ? '#f8faff' : '#ffffff' }}>
                 <td style={{
-                  border: '1px solid #c7d2e8', padding: rowPad, fontSize: `${fs(9.5)}px`,
+                  border: '1px solid #c7d2e8', padding: rowPad, fontSize: `${fs(11.5)}px`,
                   fontWeight: '700', borderLeft: `3px solid ${BLUE}`,
                 }}>
                   {sub.subjectName}
@@ -780,29 +848,29 @@ const CombinedMarksheet = ({ student, schoolInfo, academicYear }) => {
           </tbody>
           <tfoot>
             <tr style={{ background: '#e8edf7' }}>
-              <td style={{ border: `1px solid ${BLUE}`, padding: rowPad, fontWeight: '900', fontSize: `${fs(10)}px`, textAlign: 'center', color: BLUE }}>Grand Total</td>
+              <td style={{ border: `1px solid ${BLUE}`, padding: rowPad, fontWeight: '900', fontSize: `${fs(13)}px`, textAlign: 'center', color: BLUE }}>Grand Total</td>
               <td colSpan={4} style={{ border: `1px solid ${BLUE}` }} />
-              <td style={{ border: `1px solid ${BLUE}`, padding: rowPad, fontWeight: '900', fontSize: `${fs(11)}px`, textAlign: 'center', color: '#1e3575' }}>
+              <td style={{ border: `1px solid ${BLUE}`, padding: rowPad, fontWeight: '900', fontSize: `${fs(14)}px`, textAlign: 'center', color: '#1e3575' }}>
                 {grandT1 > 0 ? grandT1 : '—'}
               </td>
               <td style={{ border: `1px solid ${BLUE}` }} />
               <td colSpan={4} style={{ border: `1px solid ${BLUE}` }} />
-              <td style={{ border: `1px solid ${BLUE}`, padding: rowPad, fontWeight: '900', fontSize: `${fs(11)}px`, textAlign: 'center', color: '#78350f' }}>
+              <td style={{ border: `1px solid ${BLUE}`, padding: rowPad, fontWeight: '900', fontSize: `${fs(14)}px`, textAlign: 'center', color: '#78350f' }}>
                 {grandT2 > 0 ? grandT2 : '—'}
               </td>
               <td style={{ border: `1px solid ${BLUE}` }} />
             </tr>
             <tr style={{ background: BLUE }}>
-              <td colSpan={5} style={{ border: `1px solid ${BLUE}`, padding: rowPad, fontWeight: '900', fontSize: `${fs(10)}px`, textAlign: 'right', color: 'white' }}>
+              <td colSpan={5} style={{ border: `1px solid ${BLUE}`, padding: rowPad, fontWeight: '900', fontSize: `${fs(13)}px`, textAlign: 'right', color: 'white' }}>
                 Combined Total
               </td>
-              <td colSpan={2} style={{ border: `1px solid ${BLUE}`, padding: rowPad, fontWeight: '900', fontSize: `${fs(11)}px`, textAlign: 'center', color: '#fcd34d' }}>
+              <td colSpan={2} style={{ border: `1px solid ${BLUE}`, padding: rowPad, fontWeight: '900', fontSize: `${fs(14)}px`, textAlign: 'center', color: '#fcd34d' }}>
                 {grandTotal}/{grandMaxFinal}
               </td>
-              <td colSpan={4} style={{ border: `1px solid ${BLUE}`, padding: rowPad, fontWeight: '900', fontSize: `${fs(10)}px`, textAlign: 'right', color: 'white' }}>
+              <td colSpan={4} style={{ border: `1px solid ${BLUE}`, padding: rowPad, fontWeight: '900', fontSize: `${fs(13)}px`, textAlign: 'right', color: 'white' }}>
                 Percentage &amp; Grade
               </td>
-              <td colSpan={2} style={{ border: `1px solid ${BLUE}`, padding: rowPad, fontWeight: '900', fontSize: `${fs(11)}px`, textAlign: 'center', color: '#fcd34d' }}>
+              <td colSpan={2} style={{ border: `1px solid ${BLUE}`, padding: rowPad, fontWeight: '900', fontSize: `${fs(14)}px`, textAlign: 'center', color: '#fcd34d' }}>
                 {percentage}% &nbsp; {overallGrade}
               </td>
             </tr>
@@ -812,8 +880,8 @@ const CombinedMarksheet = ({ student, schoolInfo, academicYear }) => {
         {/* CO-SCHOLASTIC */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
           <div style={{ flex: 1, height: '1px', background: '#c7d2e8' }} />
-          <div style={{ fontWeight: '900', fontSize: '10.5px', fontFamily: 'Arial, sans-serif', color: BLUE, padding: '0 10px', letterSpacing: '0.5px' }}>
-            ✦ Co-Scholastic Area <span style={{ fontWeight: '400', fontSize: '8.5px', color: '#6b7280' }}>[A–C scale]</span> ✦
+          <div style={{ fontWeight: '900', fontSize: '15.5px', fontFamily: 'Arial, sans-serif', color: BLUE, padding: '0 10px', letterSpacing: '0.5px' }}>
+            ✦ Co-Scholastic Area <span style={{ fontWeight: '400', fontSize: '14px', color: '#6b7280' }}></span> ✦
           </div>
           <div style={{ flex: 1, height: '1px', background: '#c7d2e8' }} />
         </div>
@@ -821,23 +889,23 @@ const CombinedMarksheet = ({ student, schoolInfo, academicYear }) => {
         <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '5px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
           <thead>
             <tr>
-              <th style={{ border: `1px solid ${BLUE}`, padding: '3px 7px', fontSize: '9px', fontWeight: '800', background: BLUE, color: 'white', textAlign: 'left' }}>Activity</th>
-              <th style={{ border: `1px solid ${BLUE}`, padding: '3px 7px', fontSize: '9px', fontWeight: '800', background: '#1e3575', color: 'white', textAlign: 'center', width: '55px' }}>Term-1</th>
-              <th style={{ border: `1px solid ${BLUE}`, padding: '3px 7px', fontSize: '9px', fontWeight: '800', background: '#78350f', color: 'white', textAlign: 'center', width: '55px' }}>Term-2</th>
+              <th style={{ border: `1px solid ${BLUE}`, padding: '3px 7px', fontSize: '14.5px', fontWeight: '800', background: BLUE, color: 'white', textAlign: 'left' }}>Activity</th>
+              <th style={{ border: `1px solid ${BLUE}`, padding: '3px 7px', fontSize: '14.5px', fontWeight: '800', background: '#1e3575', color: 'white', textAlign: 'center', width: '55px' }}>Term-1</th>
+              <th style={{ border: `1px solid ${BLUE}`, padding: '3px 7px', fontSize: '14.5px', fontWeight: '800', background: '#78350f', color: 'white', textAlign: 'center', width: '55px' }}>Term-2</th>
             </tr>
           </thead>
           <tbody>
             {[['Work Education', 'workEducation'], ['Art Education', 'artEducation'], ['Health & Physical Education', 'healthPhysical']].map(([lbl, key], idx) => (
               <tr key={key} style={{ background: idx % 2 === 0 ? '#f8faff' : '#fff' }}>
-                <td style={{ border: '1px solid #c7d2e8', padding: '3px 7px', fontSize: '9px', borderLeft: `3px solid #6d28d9` }}>{lbl}</td>
-                <td style={{ border: '1px solid #c7d2e8', padding: '2px', textAlign: 'center', fontSize: '10px', fontWeight: '900', color: '#15803d', background: '#f0fdf4' }}>{coScholastic[key]?.term1 || 'A'}</td>
-                <td style={{ border: '1px solid #c7d2e8', padding: '2px', textAlign: 'center', fontSize: '10px', fontWeight: '900', color: '#15803d', background: '#f0fdf4' }}>{coScholastic[key]?.term2 || 'A'}</td>
+                <td style={{ border: '1px solid #c7d2e8', padding: '3px 7px', fontSize: '14.5px', borderLeft: `3px solid #6d28d9` }}>{lbl}</td>
+                <td style={{ border: '1px solid #c7d2e8', padding: '2px', textAlign: 'center', fontSize: '15.5px', fontWeight: '900', color: '#15803d', background: '#f0fdf4' }}>{coScholastic[key]?.term1 || 'A'}</td>
+                <td style={{ border: '1px solid #c7d2e8', padding: '2px', textAlign: 'center', fontSize: '15.5px', fontWeight: '900', color: '#15803d', background: '#f0fdf4' }}>{coScholastic[key]?.term2 || 'A'}</td>
               </tr>
             ))}
             <tr style={{ background: '#f8faff' }}>
-              <td style={{ border: '1px solid #c7d2e8', padding: '3px 7px', fontSize: '9px', borderLeft: `3px solid #6d28d9` }}>Discipline</td>
-              <td style={{ border: '1px solid #c7d2e8', padding: '2px', textAlign: 'center', fontSize: '10px', fontWeight: '900', color: '#15803d', background: '#f0fdf4' }}>{coScholastic.discipline?.term1 || 'A'}</td>
-              <td style={{ border: '1px solid #c7d2e8', padding: '2px', textAlign: 'center', fontSize: '10px', fontWeight: '900', color: '#15803d', background: '#f0fdf4' }}>{coScholastic.discipline?.term2 || 'A'}</td>
+              <td style={{ border: '1px solid #c7d2e8', padding: '3px 7px', fontSize: '14.5px', borderLeft: `3px solid #6d28d9` }}>Discipline</td>
+              <td style={{ border: '1px solid #c7d2e8', padding: '2px', textAlign: 'center', fontSize: '15.5px', fontWeight: '900', color: '#15803d', background: '#f0fdf4' }}>{coScholastic.discipline?.term1 || 'A'}</td>
+              <td style={{ border: '1px solid #c7d2e8', padding: '2px', textAlign: 'center', fontSize: '15.5px', fontWeight: '900', color: '#15803d', background: '#f0fdf4' }}>{coScholastic.discipline?.term2 || 'A'}</td>
             </tr>
           </tbody>
         </table>
@@ -845,15 +913,15 @@ const CombinedMarksheet = ({ student, schoolInfo, academicYear }) => {
         {/* ATTENDANCE + REMARK */}
         <div style={{ display: 'flex', gap: '6px', marginBottom: '4px' }}>
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '10px', background: BLUE_LIGHT, border: `1.5px solid #93afd4`, borderRadius: '4px', padding: '5px 10px' }}>
-            <span style={{ fontSize: '8.5px', fontWeight: '800', color: BLUE, textTransform: 'uppercase', letterSpacing: '0.5px', flexShrink: 0 }}>Attendance</span>
-            <span style={{ fontSize: '8.5px', color: '#6b7280' }}>Present:</span>
-            <span style={{ fontSize: '12px', fontWeight: '900', color: BLUE, minWidth: '22px', textAlign: 'center' }}>{attendance.presentDays ?? '—'}</span>
-            <span style={{ fontSize: '8.5px', color: '#d1d5db' }}>|</span>
-            <span style={{ fontSize: '8.5px', color: '#6b7280' }}>Total Days:</span>
-            <span style={{ fontSize: '12px', fontWeight: '900', color: BLUE, minWidth: '22px', textAlign: 'center' }}>{attendance.totalWorkingDays ?? '—'}</span>
-            <span style={{ fontSize: '8.5px', color: '#d1d5db' }}>|</span>
-            <span style={{ fontSize: '8.5px', color: '#6b7280' }}>Percentage:</span>
-            <span style={{ fontSize: '12px', fontWeight: '900', minWidth: '38px', textAlign: 'center',
+            <span style={{ fontSize: '14px', fontWeight: '800', color: BLUE, textTransform: 'uppercase', letterSpacing: '0.5px', flexShrink: 0 }}>Attendance</span>
+            <span style={{ fontSize: '14px', color: '#6b7280' }}>Present:</span>
+            <span style={{ fontSize: '17px', fontWeight: '900', color: BLUE, minWidth: '22px', textAlign: 'center' }}>{attendance.presentDays ?? '—'}</span>
+            <span style={{ fontSize: '14px', color: '#d1d5db' }}>|</span>
+            <span style={{ fontSize: '14px', color: '#6b7280' }}>Total Days:</span>
+            <span style={{ fontSize: '17px', fontWeight: '900', color: BLUE, minWidth: '22px', textAlign: 'center' }}>{attendance.totalWorkingDays ?? '—'}</span>
+            <span style={{ fontSize: '14px', color: '#d1d5db' }}>|</span>
+            <span style={{ fontSize: '14px', color: '#6b7280' }}>Percentage:</span>
+            <span style={{ fontSize: '17px', fontWeight: '900', minWidth: '38px', textAlign: 'center',
               color: attendance.presentDays && attendance.totalWorkingDays
                 ? ((attendance.presentDays / attendance.totalWorkingDays) * 100) >= 75 ? '#15803d' : '#dc2626'
                 : BLUE }}>
@@ -864,8 +932,8 @@ const CombinedMarksheet = ({ student, schoolInfo, academicYear }) => {
           </div>
         </div>
         <div style={{ border: `1.5px solid #c7d2e8`, borderRadius: '4px', padding: '5px 10px', marginBottom: '0px', background: '#fffbeb', borderLeft: `3px solid #f59e0b` }}>
-          <span style={{ fontSize: '8.5px', fontWeight: '800', color: '#b45309', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Class Teacher's Remark: </span>
-          <span style={{ fontSize: '9.5px', color: '#374151' }}>{remark}</span>
+          <span style={{ fontSize: '14px', fontWeight: '800', color: '#b45309', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Class Teacher's Remark: </span>
+          <span style={{ fontSize: '14.5px', color: '#374151' }}>{remark}</span>
         </div>
 
         {/* RESULT */}
@@ -874,13 +942,13 @@ const CombinedMarksheet = ({ student, schoolInfo, academicYear }) => {
           border: `1.5px solid ${pctNum >= 33 ? '#86efac' : '#fca5a5'}`,
           borderRadius: '4px', padding: '5px 12px', marginTop: '5px', marginBottom: '0' }}>
           <div>
-            <div style={{ fontSize: '9.5px', fontWeight: '800', color: pctNum >= 33 ? '#166534' : '#991b1b' }}>{resultQualified}</div>
-            <div style={{ fontSize: '8.5px', color: '#6b7280', marginTop: '1px' }}>
+            <div style={{ fontSize: '15px', fontWeight: '800', color: pctNum >= 33 ? '#166534' : '#991b1b' }}>{resultQualified}</div>
+            <div style={{ fontSize: '14px', color: '#6b7280', marginTop: '1px' }}>
               Place: {schoolInfo.schoolAddress || '—'} &nbsp;|&nbsp; Date: {today}
             </div>
           </div>
           <div style={{
-            fontSize: '15px', fontWeight: '900', letterSpacing: '2px',
+            fontSize: '20px', fontWeight: '900', letterSpacing: '2px',
             color: pctNum >= 33 ? '#166534' : '#991b1b',
             border: `2px solid ${pctNum >= 33 ? '#86efac' : '#fca5a5'}`,
             padding: '3px 14px', borderRadius: '4px', background: 'white',
@@ -899,7 +967,7 @@ const CombinedMarksheet = ({ student, schoolInfo, academicYear }) => {
             {["Parent's Signature", "Class Teacher's Signature"].map(sig => (
               <div key={sig} style={{ textAlign: 'center', flex: 1, padding: '0 8px' }}>
                 <div style={{ height: '44px', borderBottom: `1.5px solid #374151`, marginBottom: '3px' }} />
-                <div style={{ fontSize: '8.5px', color: '#374151', fontFamily: 'Arial, sans-serif', fontWeight: '600' }}>{sig}</div>
+                <div style={{ fontSize: '14px', color: '#374151', fontFamily: 'Arial, sans-serif', fontWeight: '600' }}>{sig}</div>
               </div>
             ))}
             <div style={{ textAlign: 'center', flex: 1, padding: '0 8px' }}>
@@ -907,71 +975,31 @@ const CombinedMarksheet = ({ student, schoolInfo, academicYear }) => {
                 display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
                 <img src={principalSign} alt="Principal Signature" style={{ maxHeight: '40px', maxWidth: '100%', objectFit: 'contain', marginBottom: '2px' }} />
               </div>
-              <div style={{ fontSize: '8.5px', color: '#374151', fontFamily: 'Arial, sans-serif', fontWeight: '600' }}>Principal's Signature</div>
+              <div style={{ fontSize: '14px', color: '#374151', fontFamily: 'Arial, sans-serif', fontWeight: '600' }}>Principal's Signature</div>
             </div>
           </div>
 
-          {/* GRADING + CHART */}
-          <div style={{ display: 'flex', gap: '10px', borderTop: `2px solid ${BLUE}`, paddingTop: '7px', alignItems: 'stretch' }}>
-            <div style={{ flexShrink: 0 }}>
-              <div style={{ fontSize: '8px', fontWeight: '800', marginBottom: '3px', color: BLUE, fontFamily: 'Arial, sans-serif', textTransform: 'uppercase', letterSpacing: '0.4px' }}>Grading Scale</div>
-              <table style={{ borderCollapse: 'collapse', fontSize: '8px' }}>
-                <thead>
-                  <tr>
-                    <th style={{ border: `1px solid ${BLUE}`, padding: '2px 7px', background: BLUE, color: 'white', fontWeight: '800' }}>MARKS</th>
-                    <th style={{ border: `1px solid ${BLUE}`, padding: '2px 7px', background: BLUE, color: 'white', fontWeight: '800' }}>GRADE</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {[['91-100','A1'],['81-90','A2'],['71-80','B1'],['61-70','B2'],
-                    ['51-60','C1'],['41-50','C2'],['33-40','D'],['32 & Below','E']].map(([r, g], i) => (
-                    <tr key={g} style={{ background: i % 2 === 0 ? '#f8faff' : 'white' }}>
-                      <td style={{ border: '1px solid #c7d2e8', padding: '1.5px 7px', textAlign: 'center' }}>{r}</td>
-                      <td style={{ border: '1px solid #c7d2e8', padding: '1.5px 7px', textAlign: 'center', fontWeight: '900', color: gradeColor(g), background: gradeBg(g) }}>{g}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          {/* GRADING — horizontal */}
+          <div style={{ borderTop: `2px solid ${BLUE}`, paddingTop: '7px' }}>
+            <div style={{ fontSize: '11px', fontWeight: '800', marginBottom: '5px', color: BLUE, fontFamily: 'Arial, sans-serif', textTransform: 'uppercase', letterSpacing: '0.4px', textAlign: 'center' }}>
+              Grading Scale
             </div>
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-              <div style={{ fontSize: '8px', fontWeight: '800', marginBottom: '3px', color: BLUE, fontFamily: 'Arial, sans-serif', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
-                Term-1 vs Term-2 Comparison
-              </div>
-              <div style={{ flex: 1, position: 'relative', minHeight: `${H + LABEL_H}px` }}>
-                <svg width="100%" height={H + LABEL_H} viewBox={`0 0 ${chartW} ${H + LABEL_H}`} preserveAspectRatio="xMidYMid meet" style={{ display: 'block', width: '100%', height: '100%' }}>
-                  {[0,25,50,75,100].map(v => (
-                    <g key={v}>
-                      <line x1={24} x2={chartW} y1={H-(v/100)*H} y2={H-(v/100)*H} stroke={v===0 ? '#9ca3af':'#e5e7eb'} strokeWidth={v===0?1:0.5} />
-                      <text x={20} y={H-(v/100)*H+3} textAnchor="end" fontSize="5.5" fill="#9ca3af">{v}</text>
-                    </g>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
+              <thead>
+                <tr>
+                  {[['91-100','A1'],['81-90','A2'],['71-80','B1'],['61-70','B2'],['51-60','C1'],['41-50','C2'],['33-40','D'],['32 & Below','E']].map(([r]) => (
+                    <th key={r} style={{ border: `1px solid ${BLUE}`, padding: '3px 4px', background: BLUE, color: 'white', fontWeight: '800', textAlign: 'center' }}>{r}</th>
                   ))}
-                  {enriched.map((sub, i) => {
-                    const x = 26 + i * (BAR_W * 2 + GAP + 6);
-                    const v1 = typeof sub.term1?.total === 'number' ? sub.term1.total : 0;
-                    const v2 = typeof sub.term2?.total === 'number' ? sub.term2.total : 0;
-                    const mx = sub.term1?.maxTotal || 100;
-                    const h1 = (v1/mx)*H, h2 = (v2/mx)*H;
-                    return (
-                      <g key={i}>
-                        <rect x={x+1} y={H-h1+1} width={BAR_W} height={h1} fill="rgba(0,0,0,0.07)" rx="2" />
-                        <rect x={x} y={H-h1} width={BAR_W} height={h1} fill="#1e3a8a" rx="2" />
-                        {v1>0 && <text x={x+BAR_W/2} y={H-h1-2} textAnchor="middle" fontSize="6" fill="#374151" fontWeight="700">{v1}</text>}
-                        <rect x={x+BAR_W+2+1} y={H-h2+1} width={BAR_W} height={h2} fill="rgba(0,0,0,0.07)" rx="2" />
-                        <rect x={x+BAR_W+2} y={H-h2} width={BAR_W} height={h2} fill="#d97706" rx="2" />
-                        {v2>0 && <text x={x+BAR_W+2+BAR_W/2} y={H-h2-2} textAnchor="middle" fontSize="6" fill="#374151" fontWeight="700">{v2}</text>}
-                        <text x={x+BAR_W+1} y={H+12} textAnchor="middle" fontSize="6.5" fill="#374151">
-                          {sub.subjectName?.substring(0,5)||''}
-                        </text>
-                      </g>
-                    );
-                  })}
-                  <rect x={26} y={H+18} width={7} height={7} fill="#1e3a8a" rx="1" />
-                  <text x={37} y={H+24} fontSize="7" fill="#374151" fontWeight="600">Term-1</text>
-                  <rect x={70} y={H+18} width={7} height={7} fill="#d97706" rx="1" />
-                  <text x={81} y={H+24} fontSize="7" fill="#374151" fontWeight="600">Term-2</text>
-                </svg>
-              </div>
-            </div>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  {[['91-100','A1'],['81-90','A2'],['71-80','B1'],['61-70','B2'],['51-60','C1'],['41-50','C2'],['33-40','D'],['32 & Below','E']].map(([, g]) => (
+                    <td key={g} style={{ border: '1px solid #c7d2e8', padding: '3px 4px', textAlign: 'center', fontWeight: '900', fontSize: '12px', color: gradeColor(g), background: gradeBg(g) }}>{g}</td>
+                  ))}
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
 
@@ -1261,13 +1289,17 @@ const ResultGeneration = () => {
               <div style={{
                 position: 'relative', zIndex: 2,
                 boxShadow: '0 8px 32px rgba(0,0,0,0.22), 0 2px 8px rgba(0,0,0,0.12)',
-                borderRadius: '3px', overflow: 'hidden',
-                /* Use a fixed width instead of transform:scale so the
-                   content inside doesn't differ from the printed version */
-                width: '680px',
-                transformOrigin: 'top center',
+                borderRadius: '3px',
+                width: '750px',
+                height: '1058px',
+                overflow: 'hidden',
               }}>
-                <div style={{ transform: 'scale(0.851)', transformOrigin: 'top left', width: '798px' }}>
+                <div style={{
+                  transform: 'scale(0.942)',
+                  transformOrigin: 'top left',
+                  width: '796px',
+                  height: '1122px',
+                }}>
                   {mode === 'final' ? (
                     <CombinedMarksheet student={results[currentIdx]} schoolInfo={schoolInfo} academicYear={viewYear} />
                   ) : (
