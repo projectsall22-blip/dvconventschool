@@ -7,17 +7,12 @@ export default {
   theme: {
     extend: {
       colors: {
-        primary:        "#1E40AF",
-        "primary-light":"#3B82F6",
-        "primary-dark": "#1E3A5F",
-        secondary:      "#64748B",
-        success:        "#059669",
-        danger:         "#DC2626",
-        warning:        "#D97706",
-        background:     "#EEF2F7",
-        surface:        "#FFFFFF",
-        accent:         "#0EA5E9",
-        gold:           "#F59E0B",
+        primary:    '#4F46E5',
+        secondary:  '#6B7280',
+        success:    '#10B981',
+        danger:     '#EF4444',
+        warning:    '#F59E0B',
+        background: '#F9FAFB',
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],

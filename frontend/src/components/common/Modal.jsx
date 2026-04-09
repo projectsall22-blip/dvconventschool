@@ -38,14 +38,14 @@ const Modal = ({ isOpen, onClose, title, children, footer, size = 'md' }) => {
         `}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-primary-dark to-primary shrink-0">
-          <h3 className="text-sm font-bold text-white tracking-tight">{title}</h3>
+        <div className="flex items-center justify-between px-6 py-4 border-b shrink-0">
+          <h3 className="text-lg font-bold text-gray-800">{title}</h3>
           <button
             onClick={onClose}
-            className="p-1.5 hover:bg-white/20 rounded-full transition-colors text-white/70 hover:text-white"
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400 hover:text-gray-600"
             aria-label="Close modal"
           >
-            <X size={17} />
+            <X size={20} />
           </button>
         </div>
 

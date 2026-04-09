@@ -42,7 +42,6 @@ const StudentDirectory = () => {
 
   // ============ CONSTANTS ============
   const DOCUMENT_LABELS = {
-    transferCertificate: 'Transfer Certificate',
     characterCertificate: 'Character Certificate',
     markSheet: 'Mark Sheet',
     migrationCertificate: 'Migration Certificate',

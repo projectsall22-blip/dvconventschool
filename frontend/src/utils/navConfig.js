@@ -1,7 +1,8 @@
 import { 
   LayoutDashboard, Users, BookOpen, Calendar, ClipboardCheck, 
   FileText, Megaphone, Settings, GraduationCap, Clock,
-  BookMarked, Trophy, Medal, UserCircle, RefreshCcw, CalendarDays, CreditCard, ScrollText, FileBarChart2
+  BookMarked, Trophy, Medal, UserCircle, RefreshCcw, CalendarDays,
+  CreditCard, FileBarChart2, DollarSign
 } from 'lucide-react';
 
 export const navConfig = {
@@ -24,8 +25,8 @@ export const navConfig = {
     { title: 'Marks',        path: '/admin/marks',        icon: Trophy },
     { title: 'Results',      path: '/admin/results',      icon: FileBarChart2 },
     { title: 'Announcements',path: '/admin/announcements',icon: Megaphone },
-    { title: 'ID Cards',         path: '/admin/id-cards',   icon: CreditCard },
-    { title: 'Transfer Cert.',   path: '/admin/transfer-certificate', icon: ScrollText },
+    { title: 'Fees',         path: '/admin/fees',         icon: DollarSign },
+    { title: 'ID Cards',     path: '/admin/id-cards',     icon: CreditCard },
     { title: 'Annual Transition', path: '/admin/transition', icon: RefreshCcw },
     { title: 'Settings',         path: '/admin/settings',   icon: Settings },
   ],
@@ -40,6 +41,7 @@ export const navConfig = {
     { title: 'Merit List',     path: '/teacher/ranks',        icon: Medal },
     { title: 'Exam Schedule',  path: '/teacher/datesheet',    icon: CalendarDays },
     { title: 'Announcements',  path: '/teacher/announcements',icon: Megaphone },
+    { title: 'Fee Status',     path: '/teacher/fees',         icon: DollarSign },
   ],
 
   student: [
@@ -49,6 +51,7 @@ export const navConfig = {
     { title: 'Homework',     path: '/student/homework',     icon: BookMarked },
     { title: 'My Marks',     path: '/student/marks',        icon: Trophy },
     { title: 'Exam Schedule',path: '/student/datesheet',    icon: CalendarDays },
+    { title: 'My Fees',      path: '/student/fees',         icon: DollarSign },
     { title: 'Announcements',path: '/student/announcements',icon: Megaphone },
   ],
 };

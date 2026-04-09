@@ -2,12 +2,14 @@ const mongoose = require('mongoose');
 
 const settingsSchema = new mongoose.Schema({
     schoolName: { type: String, default: "DV Convent School" },
-    schoolSlogan: { type: String, default: "Education for Excellence" }, // NEW
-    schoolAddress: { type: String, default: "Enter School Address" },   // NEW
+    schoolSlogan: { type: String, default: "Education for Excellence" },
+    schoolAddress: { type: String, default: "Enter School Address" },
     contactNumber: { type: String, default: "0000000000" },
-    schoolLogo: { type: String, default: "" },                           // NEW (Base64)
+    schoolLogo: { type: String, default: "" },
     currentAcademicYear: { type: String, default: "2025-26" },
     isRegistrationOpen: { type: Boolean, default: true },
+    upiId: { type: String, default: "" },        // e.g. school@upi
+    upiQrCode: { type: String, default: "" },    // Base64 QR image
 }, { timestamps: true });
 
 module.exports = mongoose.model('Settings', settingsSchema);

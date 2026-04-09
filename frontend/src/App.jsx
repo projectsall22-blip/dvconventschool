@@ -16,6 +16,7 @@ import StudentTimetable from './pages/student/Timetable';
 import StudentAttendance from './pages/student/Attendance';
 import StudentHomework from './pages/student/Homework';
 import StudentMarks from './pages/student/Marks';
+import StudentFees from './pages/student/Fees';
 import StudentProfile from './pages/student/Profile';
 
 // --- TEACHER PAGES ---
@@ -44,20 +45,19 @@ import AdminSettings from './pages/admin/Settings';
 import AdminProfile from './pages/admin/AdminProfile';
 import AnnualTransition from './pages/admin/AnnualTransition';
 import IDCardGenerator from './pages/admin/IDCardGenerator';
-import TransferCertificate from './pages/admin/TransferCertificate';
-
 import DatesheetBuilder from './pages/admin/DatesheetBuilder';
 import DatesheetView from './pages/shared/DatesheetView';
 import ResultGeneration from './pages/admin/ResultGeneration';
+import FeeManagement from './pages/admin/FeeManagement';
+import TeacherFeeStatus from './pages/teacher/FeeStatus';
 
 function App() {
   const { isAuthenticated, user, loading } = useAuth();
 
   if (loading) {
     return (
-      <div className="h-screen w-screen flex flex-col items-center justify-center bg-gradient-to-br from-[#0F2044] via-[#1E3A5F] to-[#1E40AF]">
-        <div className="w-16 h-16 border-4 border-white/20 border-t-white rounded-full animate-spin mb-4" />
-        <p className="text-white/60 text-xs font-bold uppercase tracking-widest animate-pulse">Loading...</p>
+      <div className="h-screen w-screen flex items-center justify-center bg-background">
+        <LoadingSpinner size="lg" />
       </div>
     );
   }
@@ -102,11 +102,11 @@ function App() {
         <Route path="profile" element={<AdminProfile />} />  
         <Route path="marks" element={<RankList />} />
         <Route path="results" element={<ResultGeneration />} />
+        <Route path="fees" element={<FeeManagement />} />
         <Route path="announcements" element={<AnnouncementManagement />} />
         <Route path="settings" element={<AdminSettings />} />
         <Route path="transition" element={<AnnualTransition />} />
         <Route path="id-cards" element={<IDCardGenerator />} />
-        <Route path="transfer-certificate" element={<TransferCertificate />} />
       </Route>
 
       {/* ================= TEACHER ROUTES ================= */}
@@ -128,6 +128,7 @@ function App() {
         <Route path="announcements" element={<UserAnnouncements />} />
         <Route path="profile" element={<TeacherProfile />} />
         <Route path="timetable" element={<TeacherTimetable />} />
+        <Route path="fees" element={<TeacherFeeStatus />} />
       </Route>
 
 
@@ -145,6 +146,7 @@ function App() {
         <Route path="attendance" element={<StudentAttendance />} />
         <Route path="homework" element={<StudentHomework />} />
         <Route path="marks" element={<StudentMarks />} />
+        <Route path="fees" element={<StudentFees />} />
         <Route path="datesheet" element={<DatesheetView role="student" />} />
         <Route path="announcements" element={<UserAnnouncements />} />
         <Route path="profile" element={<StudentProfile />} />

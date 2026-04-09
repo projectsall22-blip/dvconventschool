@@ -14,12 +14,12 @@ const Table = ({
       <div className="bg-white border border-slate-100/80 rounded-2xl shadow-card overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-gradient-to-r from-primary-dark to-primary">
+            <thead className="bg-gray-50 border-b border-gray-100">
+              <tr>
                 {headers.map((header, i) => (
                   <th
                     key={i}
-                    className="px-5 py-3.5 text-[10px] font-bold text-blue-100/90 uppercase tracking-widest whitespace-nowrap first:pl-6 last:pr-6"
+                    className="px-6 py-4 text-xs font-bold text-secondary uppercase tracking-wider whitespace-nowrap"
                   >
                     {header}
                   </th>
