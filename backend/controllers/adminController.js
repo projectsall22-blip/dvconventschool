@@ -567,10 +567,13 @@ const issueTCForStudent = async (req, res) => {
         const isDuplicate = !!student.tcIssuedAt;
         if (!isDuplicate) {
             student.tcIssuedAt = new Date();
+            const { tcNumber, bookNo, srNo, religion, caste, admissionDate, admissionClass, leavingDate, applicationDate, reason, remark } = req.body;
+            student.tcDetails = { tcNumber, bookNo, srNo, religion, caste, admissionDate, admissionClass, leavingDate, applicationDate, reason, remark };
+            student.markModified('tcDetails');
             await student.save();
         }
 
-        res.status(200).json({ isDuplicate, tcIssuedAt: student.tcIssuedAt });
+        res.status(200).json({ isDuplicate, tcIssuedAt: student.tcIssuedAt, tcDetails: student.tcDetails });
     } catch (error) {
         res.status(500).json({ message: 'Server Error', error: error.message });
     }

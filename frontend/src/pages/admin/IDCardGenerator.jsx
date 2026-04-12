@@ -8,153 +8,180 @@ import schoolLogo from '../../assets/school_logo.png';
 import signImage from '../../assets/sign.png';
 import { downloadCards } from '../../utils/idCardDownload';
 
-const CARD_W_PX = 204;
-const CARD_H_PX = 323;
+const CARD_W = 220;
+const CARD_H = 360;
 
-const cardBase = {
-  width: CARD_W_PX, height: CARD_H_PX,
-  minWidth: CARD_W_PX, maxWidth: CARD_W_PX,
-  minHeight: CARD_H_PX, maxHeight: CARD_H_PX,
-  fontFamily: 'Arial, Helvetica, sans-serif',
-  borderRadius: 12, overflow: 'hidden',
-  display: 'flex', flexDirection: 'column',
-  background: '#fff',
-  boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
-  flexShrink: 0, position: 'relative',
-};
+// ─── StudentCard ──────────────────────────────────────────────────────────────
+const StudentCard = ({ student, settings, color = '#1565c0' }) => {
+  const dob     = student.dateOfBirth ? new Date(student.dateOfBirth).toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—';
+  const contact = student.fatherMobile || student.motherMobile || student.guardianMobile || '—';
+  const apiBase = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
+  const photo   = student.profileImage
+    ? (student.profileImage.startsWith('data:') ? student.profileImage : `${apiBase}${student.profileImage}`)
+    : null;
 
-// ─── StudentCard preview ──────────────────────────────────────────────────────
-const StudentCard = ({ student, settings }) => {
-  const dob        = student.dateOfBirth ? new Date(student.dateOfBirth).toLocaleDateString('en-GB') : 'N/A';
-  const contact    = student.fatherMobile || student.guardianMobile || 'N/A';
-  const parentName = student.fatherName   || student.guardianName   || 'N/A';
+  // derive a slightly lighter shade for gradient
+  const colorDark  = color;
+  const colorLight = color + 'dd';
+
+  const Row = ({ label, value }) => (
+    <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', padding: '3px 0' }}>
+      <span style={{ fontSize: 7, color: '#374151', fontWeight: 600, width: 62, flexShrink: 0 }}>{label}</span>
+      <span style={{ fontSize: 7, color: '#111827', fontWeight: 500, flex: 1 }}>{value || '—'}</span>
+    </div>
+  );
 
   return (
-    <div style={cardBase}>
-      {/* ── Header — taller, bigger logo + text ── */}
-      <div style={{
-        background: 'linear-gradient(135deg,#1a2e6e,#1e3a8a)',
-        padding: '6px 8px',
-        display: 'flex', alignItems: 'center', gap: 8,
-        flexShrink: 0,
-        minHeight: 60,        // ← taller header
-      }}>
-        {/* Logo 48px (was 32px) */}
-        <img
-          src={settings.schoolLogo || schoolLogo} alt="logo"
-          style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover', border: '2px solid #fff', flexShrink: 0 }}
-        />
-        <div style={{ flex: 1, minWidth: 0 }}>
-          {/* School name 13px (was 9px) */}
-          <div style={{ color: '#fff', fontWeight: 900, fontSize: 10, letterSpacing: '0.3px', lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {settings.schoolName || 'D V CONVENT SCHOOL'}
-          </div>
-          {/* Address 9px (was 6.5px) */}
-          <div style={{ color: '#cbd5e1', fontSize: 8, lineHeight: 1.4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {settings.schoolAddress || 'Akodha,Rohi,Bhadohi-221308'}
-          </div>
-          {/* Phone 9px (was 6.5px) */}
-          <div style={{ color: '#fbbf24', fontSize: 8, lineHeight: 1.4 }}>
-            📞 {settings.contactNumber || '0000000000'}
-          </div>
-        </div>
-      </div>
+    <div style={{ width: CARD_W, height: CARD_H, fontFamily: 'Arial, sans-serif', borderRadius: 12, overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 6px 24px rgba(0,0,0,0.18)', flexShrink: 0, background: '#fff' }}>
 
-      {/* ── Body ── */}
-      <div style={{ background: 'linear-gradient(180deg,#dbeafe 0%,#eff6ff 60%,#fff 100%)', flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '8px 8px 0', gap: 4 }}>
-        {/* Photo */}
-        <div style={{ width: 56, height: 56, borderRadius: '50%', border: '3px solid #1e3a8a', overflow: 'hidden', background: '#e0e7ff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          {student.profileImage
-            ? <img src={student.profileImage} alt="photo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            : <span style={{ fontSize: 22, fontWeight: 900, color: '#1e3a8a' }}>{student.name?.charAt(0)}</span>}
-        </div>
-        {/* Name */}
-        <div style={{ padding: '2px 8px' }}>
-          <span style={{ color: '#1e3a8a', fontWeight: 900, fontSize: 11, letterSpacing: '0.3px' }}>{student.name}</span>
-        </div>
-        {/* UID */}
-        <div style={{ border: '1.5px solid #ca8a04', borderRadius: 6, padding: '2px 10px', background: '#fefce8' }}>
-          <span style={{ color: '#92400e', fontWeight: 900, fontSize: 7.5 }}>UID : {student.UID || 'N/A'}</span>
-        </div>
-        {/* Info rows */}
-        <div style={{ width: '100%', borderTop: '1px solid #e2e8f0', paddingTop: 4, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-          {[['FATHER', parentName], ['D.O.B', dob], ['CLASS', student.class], ['MOBILE', contact], ['ADDRESS', student.address]].map(([label, value]) => (
-            <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '0 4px' }}>
-              <span style={{ color: '#1e3a8a', fontWeight: 900, fontSize: 6, width: 38, flexShrink: 0, letterSpacing: '0.3px' }}>{label}:</span>
-              <span style={{ fontSize: 6.5, fontWeight: 700, color: '#111827', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{value || 'N/A'}</span>
+      {/* ── Header ── */}
+      <div style={{ background: `linear-gradient(180deg, ${colorDark} 0%, ${colorLight} 100%)`, padding: '8px 12px', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ width: 52, height: 52, borderRadius: '50%', border: '2px solid #fff', overflow: 'hidden', background: '#fff', flexShrink: 0 }}>
+            <img src={settings.schoolLogo || schoolLogo} alt="logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          </div>
+          <div style={{ flex: 1, textAlign: 'center', paddingTop: 4 }}>
+            <div style={{ color: '#fff', fontWeight: 900, fontSize: 12.5, lineHeight: 1.2 }}>
+              {settings.schoolName || 'D V Convent School'}
             </div>
-          ))}
+            <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: 6.5, marginTop: 1 }}>(Govt. Recognised)</div>
+            <div style={{ color: 'rgba(255,255,255,0.9)', fontSize: 6.5, marginTop: 2 }}>
+              {settings.schoolAddress || 'Akodha, Rohi, Bhadohi - 221308'}
+            </div>
+            <div style={{ color: '#fff', fontWeight: 800, fontSize: 7, marginTop: 2 }}>
+              Phone No.: {settings.contactNumber || '—'}
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* ── Footer ── */}
-      <div style={{ borderTop: '1px dashed #cbd5e1', padding: '4px 8px 3px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexShrink: 0, background: '#fff' }}>
-        <div>
-          <div style={{ fontSize: 5.5, fontWeight: 900, color: '#6b7280', letterSpacing: '0.3px' }}>SESSION:</div>
-          <div style={{ fontSize: 6, fontWeight: 900, color: '#374151' }}>{settings.currentAcademicYear || '2025-26'}</div>
+      {/* ── Wave divider ── */}
+      <div style={{ height: 10, background: `linear-gradient(180deg, ${colorLight} 0%, #fff 100%)`, flexShrink: 0 }} />
+
+      {/* ── Photo centered ── */}
+      <div style={{ display: 'flex', justifyContent: 'center', marginTop: -2, flexShrink: 0 }}>
+        <div style={{ width: 86, height: 94, border: `2.5px solid ${colorDark}`, overflow: 'hidden', background: '#dbeafe', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {photo
+            ? <img src={photo} alt="photo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            : <span style={{ fontSize: 36, fontWeight: 900, color: colorDark }}>{student.name?.charAt(0)}</span>}
+        </div>
+      </div>
+
+      {/* ── Student Name + UID ── */}
+      <div style={{ textAlign: 'center', padding: '5px 12px 3px' }}>
+        <div style={{ color: '#111827', fontWeight: 700, fontSize: 13, letterSpacing: '0.2px' }}>{student.name}</div>
+        <div style={{ display: 'inline-block', background: colorDark, color: '#fff', fontWeight: 800, fontSize: 7.5, padding: '2px 12px', borderRadius: 20, marginTop: 3, letterSpacing: '0.5px' }}>
+          UID: {student.UID || '—'}
+        </div>
+      </div>
+
+      {/* ── Info table ── */}
+      <div style={{ padding: '2px 12px', flex: 1 }}>
+        <Row label="Father's Name" value={student.fatherName || '—'} />
+        <Row label="Mother's Name" value={student.motherName || '—'} />
+        <Row label="D.O.B." value={dob} />
+        <Row label="Contact No." value={contact} />
+        <Row label="Add." value={student.address || '—'} />
+      </div>
+
+      {/* ── Footer: Class + Sign ── */}
+      <div style={{ padding: '3px 12px 2px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderTop: '1px solid #e5e7eb' }}>
+        <div style={{ fontSize: 10, fontWeight: 800, color: '#111827' }}>
+          Class : {student.class || '—'}
         </div>
         <div style={{ textAlign: 'center' }}>
-          <img src={signImage} alt="sign" style={{ height: 18, objectFit: 'contain' }} />
-          <div style={{ borderTop: '1px solid #374151', fontSize: 5.5, fontWeight: 900, color: '#374151', letterSpacing: '0.5px', paddingTop: 1 }}>PRINCIPAL</div>
+          <img src={signImage} alt="sign" style={{ height: 22, objectFit: 'contain', display: 'block', margin: '0 auto' }} />
+          <div style={{ fontSize: 7, color: '#374151', fontWeight: 600, marginTop: 1 }}>Principal Sign.</div>
         </div>
       </div>
 
-      {/* ── Strip ── */}
-      <div style={{ background: '#1e3a8a', padding: '7px 0', textAlign: 'center', flexShrink: 0 }}>
-        <span style={{ color: '#fff', fontSize: 7, fontWeight: 700, letterSpacing: '0.5px' }}>If found, please return to school</span>
+      {/* ── Bottom note ── */}
+      <div style={{ background: colorDark, padding: '3px 10px', textAlign: 'center', flexShrink: 0 }}>
+        <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: 5.5, fontWeight: 500, letterSpacing: '0.3px' }}>
+          If found, please return to school  •  Ph: {settings.contactNumber || '—'}
+        </span>
       </div>
     </div>
   );
 };
 
-// ─── TeacherCard preview ──────────────────────────────────────────────────────
+// ─── TeacherCard ──────────────────────────────────────────────────────────────
 const TeacherCard = ({ teacher, settings }) => {
-  const dob = teacher.dateOfBirth ? new Date(teacher.dateOfBirth).toLocaleDateString('en-GB') : 'N/A';
+  const apiBase = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
+  const photo   = teacher.profileImage
+    ? (teacher.profileImage.startsWith('data:') ? teacher.profileImage : `${apiBase}${teacher.profileImage}`)
+    : null;
 
   return (
-    <div style={cardBase}>
-      <div style={{ background: 'linear-gradient(135deg,#7f1d1d,#991b1b)', padding: '6px 8px', display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, minHeight: 72 }}>
-        <img src={settings.schoolLogo || schoolLogo} alt="logo" style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover', border: '2px solid #fff', flexShrink: 0 }} />
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ color: '#fff', fontWeight: 900, fontSize: 10, letterSpacing: '0.3px', lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{settings.schoolName || 'D V CONVENT SCHOOL'}</div>
-          <div style={{ color: '#fca5a5', fontSize: 8, lineHeight: 1.4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{settings.schoolAddress || 'Akodha,Rohi,Bhadohi-221308'}</div>
-          <div style={{ color: '#fbbf24', fontSize: 8, lineHeight: 1.4 }}>📞 {settings.contactNumber || '0000000000'}</div>
+    <div style={{ width: CARD_W, height: CARD_H, fontFamily: 'Arial, sans-serif', borderRadius: 12, overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 6px 24px rgba(0,0,0,0.2)', flexShrink: 0, background: '#fff' }}>
+
+      {/* ── Dark Red Header ── */}
+      <div style={{ background: 'linear-gradient(180deg, #8b1a1a 0%, #a52020 100%)', padding: '8px 12px', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ width: 52, height: 52, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.8)', overflow: 'hidden', background: '#fff', flexShrink: 0 }}>
+            <img src={settings.schoolLogo || schoolLogo} alt="logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          </div>
+          <div style={{ flex: 1, textAlign: 'center', paddingTop: 4 }}>
+            <div style={{ color: '#fff', fontWeight: 900, fontSize: 12.5, lineHeight: 1.2 }}>
+              {settings.schoolName || 'D V Convent School'}
+            </div>
+            <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: 6.5, marginTop: 1 }}>(Govt. Recognised)</div>
+            <div style={{ color: 'rgba(255,255,255,0.9)', fontSize: 6.5, marginTop: 2 }}>
+              {settings.schoolAddress || 'Akodha, Rohi, Bhadohi - 221308'}
+            </div>
+            <div style={{ color: '#fff', fontWeight: 800, fontSize: 7, marginTop: 2 }}>
+              Phone No.: {settings.contactNumber || '—'}
+            </div>
+          </div>
         </div>
       </div>
 
-      <div style={{ background: 'linear-gradient(180deg,#fee2e2 0%,#fff5f5 60%,#fff 100%)', flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '8px 8px 0', gap: 4 }}>
-        <div style={{ width: 56, height: 56, borderRadius: 8, border: '3px solid #991b1b', overflow: 'hidden', background: '#fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          {teacher.profileImage
-            ? <img src={teacher.profileImage} alt="photo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            : <span style={{ fontSize: 22, fontWeight: 900, color: '#991b1b' }}>{teacher.name?.charAt(0)}</span>}
+      {/* ── White body ── */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '8px 12px 6px', background: '#fff' }}>
+
+        {/* Photo */}
+        <div style={{ width: 96, height: 106, border: '2.5px solid #8b1a1a', overflow: 'hidden', background: '#f5e0e0', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          {photo
+            ? <img src={photo} alt="photo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            : <span style={{ fontSize: 40, fontWeight: 900, color: '#8b1a1a' }}>{teacher.name?.charAt(0)}</span>}
         </div>
-        <div style={{ fontWeight: 900, fontSize: 9, color: '#1f2937', textAlign: 'center' }}>{teacher.name}</div>
-        <div style={{ background: '#7f1d1d', borderRadius: 6, padding: '2px 10px' }}>
-          <span style={{ color: '#fff', fontWeight: 900, fontSize: 7.5 }}>ID : {teacher.employeeCode || 'N/A'}</span>
+
+        {/* Name */}
+        <div style={{ color: '#111827', fontWeight: 900, fontSize: 13, marginTop: 5, textAlign: 'center', letterSpacing: '0.2px' }}>
+          {teacher.name}
         </div>
-        <div style={{ width: '100%', borderTop: '1px solid #fecaca', paddingTop: 4, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-          {[['D.O.B', dob], ['PHONE', teacher.phone], ['QUAL.', teacher.qualifications], ['EXP.', teacher.experience ? `${teacher.experience} yrs` : 'N/A'], ['ADDRESS', teacher.address]].map(([label, value]) => (
-            <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '0 4px' }}>
-              <span style={{ color: '#991b1b', fontWeight: 900, fontSize: 6, width: 38, flexShrink: 0, letterSpacing: '0.3px' }}>{label}:</span>
-              <span style={{ fontSize: 6.5, fontWeight: 700, color: '#111827', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{value || 'N/A'}</span>
+
+        {/* Emp ID pill */}
+        <div style={{ display: 'inline-block', background: '#8b1a1a', color: '#fff', fontWeight: 800, fontSize: 7.5, padding: '2px 12px', borderRadius: 20, marginTop: 3, letterSpacing: '0.5px' }}>
+          ID: {teacher.employeeCode || '—'}
+        </div>
+
+        {/* Info rows */}
+        <div style={{ width: '100%', marginTop: 6, borderTop: '1px solid #f0e0e0' }}>
+          {[
+            ['Designation', teacher.designation || 'Teacher'],
+            ['Phone', teacher.phone],
+            ['Address', teacher.address],
+          ].map(([lbl, val]) => (
+            <div key={lbl} style={{ display: 'flex', borderBottom: '1px solid #f5e0e0', padding: '4px 0' }}>
+              <span style={{ fontSize: 7, color: '#8b1a1a', fontWeight: 700, width: 58, flexShrink: 0 }}>{lbl}:</span>
+              <span style={{ fontSize: 7, color: '#111827', fontWeight: 500, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{val || '—'}</span>
             </div>
           ))}
         </div>
-      </div>
 
-      <div style={{ borderTop: '1px dashed #fca5a5', padding: '4px 8px 3px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexShrink: 0, background: '#fff' }}>
-        <div>
-          <div style={{ fontSize: 5.5, fontWeight: 900, color: '#6b7280', letterSpacing: '0.3px' }}>SESSION:</div>
-          <div style={{ fontSize: 6, fontWeight: 900, color: '#374151' }}>{settings.currentAcademicYear || '2025-26'}</div>
-        </div>
-        <div style={{ textAlign: 'center' }}>
-          <img src={signImage} alt="sign" style={{ height: 18, objectFit: 'contain' }} />
-          <div style={{ borderTop: '1px solid #374151', fontSize: 5.5, fontWeight: 900, color: '#374151', letterSpacing: '0.5px', paddingTop: 1 }}>PRINCIPAL</div>
+        {/* Principal Sign */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', marginTop: 'auto', paddingTop: 6, borderTop: '1px solid #f0e0e0' }}>
+          <div style={{ textAlign: 'center' }}>
+            <img src={signImage} alt="sign" style={{ height: 22, objectFit: 'contain', display: 'block', margin: '0 auto' }} />
+            <div style={{ fontSize: 7, color: '#374151', fontWeight: 600, marginTop: 1 }}>Principal Sign.</div>
+          </div>
         </div>
       </div>
 
-      <div style={{ background: '#7f1d1d', padding: '7px 0', textAlign: 'center', flexShrink: 0 }}>
-        <span style={{ color: '#fff', fontSize: 7, fontWeight: 700, letterSpacing: '0.5px' }}>TEACHING STAFF</span>
+      {/* ── Red bottom strip ── */}
+      <div style={{ background: '#8b1a1a', padding: '3px 10px', textAlign: 'center', flexShrink: 0 }}>
+        <span style={{ color: '#fff', fontWeight: 900, fontSize: 11, letterSpacing: '1.5px', textTransform: 'uppercase' }}>Staff ID Card</span>
       </div>
     </div>
   );
@@ -174,6 +201,9 @@ const IDCardGenerator = () => {
   const [pagination, setPagination] = useState({});
   const [printing, setPrinting]     = useState(false);
   const [progress, setProgress]     = useState({ current: 0, total: 0 });
+  const [studentColor, setStudentColor] = useState('#1565c0');
+
+  const PRESET_COLORS = ['#1565c0','#1b5e20','#4a148c','#e65100','#880e4f','#006064','#37474f','#b71c1c'];
 
   useEffect(() => {
     const t = setTimeout(fetchData, 300);
@@ -205,10 +235,10 @@ const IDCardGenerator = () => {
     setToast({ message: selectedItems.length === 1 ? 'Preparing PNG…' : 'Preparing ZIP…', type: 'success' });
     try {
       await downloadCards(selectedItems, tab, settings, schoolLogo, signImage,
-        (current, total) => setProgress({ current, total }));
+        (current, total) => setProgress({ current, total }),
+        tab === 'student' ? studentColor : null);
       setToast({ message: selectedItems.length === 1 ? 'PNG downloaded!' : `ZIP downloaded (${selectedItems.length} cards)!`, type: 'success' });
     } catch (err) {
-      console.error(err);
       setToast({ message: 'Download failed: ' + err.message, type: 'error' });
     } finally {
       setPrinting(false);
@@ -223,7 +253,6 @@ const IDCardGenerator = () => {
     <div className="space-y-5">
       {toast && <Toast {...toast} onClose={() => setToast(null)} />}
 
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-black text-gray-900 tracking-tight">ID Card Generator</h1>
@@ -238,7 +267,6 @@ const IDCardGenerator = () => {
         </button>
       </div>
 
-      {/* Tabs */}
       <div className="flex gap-2 bg-gray-100 p-1 rounded-xl w-fit">
         {[['student', 'Students', <Users size={14} />], ['teacher', 'Teachers', <GraduationCap size={14} />]].map(([t, label, icon]) => (
           <button key={t} onClick={() => handleTabChange(t)}
@@ -248,7 +276,6 @@ const IDCardGenerator = () => {
         ))}
       </div>
 
-      {/* Filters */}
       <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-2 flex-1 min-w-[180px] bg-gray-50 rounded-xl px-3 h-10 border border-gray-100">
           <Search size={14} className="text-gray-400 shrink-0" />
@@ -263,13 +290,26 @@ const IDCardGenerator = () => {
             {CLASSES.map(c => <option key={c} value={c}>Class {c}</option>)}
           </select>
         )}
+        {tab === 'student' && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-gray-500">Color:</span>
+            <div className="flex items-center gap-1">
+              {PRESET_COLORS.map(c => (
+                <button key={c} onClick={() => setStudentColor(c)}
+                  style={{ background: c, width: 20, height: 20, borderRadius: '50%', border: studentColor === c ? '2px solid #111' : '2px solid transparent', flexShrink: 0, outline: studentColor === c ? '2px solid #fff' : 'none', outlineOffset: '-3px' }} />
+              ))}
+              <input type="color" value={studentColor} onChange={e => setStudentColor(e.target.value)}
+                className="w-7 h-7 rounded-full cursor-pointer border-0 bg-transparent p-0"
+                title="Custom color" style={{ padding: 0 }} />
+            </div>
+          </div>
+        )}
         <button onClick={toggleAll}
           className="h-10 px-4 bg-indigo-50 text-indigo-700 font-bold text-xs rounded-xl hover:bg-indigo-100 transition-colors border border-indigo-100">
           {selected.size === items.length && items.length > 0 ? 'Deselect All' : 'Select All'}
         </button>
       </div>
 
-      {/* Cards Grid */}
       {loading ? (
         <div className="py-20 flex justify-center"><LoadingSpinner size="lg" /></div>
       ) : items.length === 0 ? (
@@ -278,17 +318,18 @@ const IDCardGenerator = () => {
         <div className="flex flex-wrap gap-5">
           {items.map(item => (
             <div key={item._id} onClick={() => toggleSelect(item._id)} style={{ cursor: 'pointer', position: 'relative', flexShrink: 0 }}>
-              <div style={{ position: 'absolute', inset: -3, borderRadius: 15, border: selected.has(item._id) ? '3px solid #4f46e5' : '3px solid transparent', transition: 'border-color 0.15s', pointerEvents: 'none', zIndex: 10 }} />
+              <div style={{ position: 'absolute', inset: -3, borderRadius: 17, border: selected.has(item._id) ? '3px solid #4f46e5' : '3px solid transparent', transition: 'border-color 0.15s', pointerEvents: 'none', zIndex: 10 }} />
               {selected.has(item._id) && (
                 <div style={{ position: 'absolute', top: -6, right: -6, width: 20, height: 20, borderRadius: '50%', background: '#4f46e5', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 900, zIndex: 20, boxShadow: '0 2px 6px rgba(79,70,229,0.4)' }}>✓</div>
               )}
-              {tab === 'student' ? <StudentCard student={item} settings={settings} /> : <TeacherCard teacher={item} settings={settings} />}
+              {tab === 'student'
+                ? <StudentCard student={item} settings={settings} color={studentColor} />
+                : <TeacherCard teacher={item} settings={settings} />}
             </div>
           ))}
         </div>
       )}
 
-      {/* Pagination */}
       {pagination.totalPages > 1 && (
         <div className="flex items-center justify-center gap-4 pt-2">
           <button disabled={page === 1} onClick={() => setPage(p => p - 1)} className="p-2 bg-white border border-gray-200 rounded-xl disabled:opacity-30 shadow-sm"><ChevronLeft size={18} /></button>

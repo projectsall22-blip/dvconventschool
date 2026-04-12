@@ -2,7 +2,7 @@ import {
   LayoutDashboard, Users, BookOpen, Calendar, ClipboardCheck, 
   FileText, Megaphone, Settings, GraduationCap, Clock,
   BookMarked, Trophy, Medal, UserCircle, RefreshCcw, CalendarDays,
-  CreditCard, FileBarChart2, DollarSign
+  CreditCard, FileBarChart2, DollarSign, ScrollText, Bus
 } from 'lucide-react';
 
 export const navConfig = {
@@ -26,7 +26,9 @@ export const navConfig = {
     { title: 'Results',      path: '/admin/results',      icon: FileBarChart2 },
     { title: 'Announcements',path: '/admin/announcements',icon: Megaphone },
     { title: 'Fees',         path: '/admin/fees',         icon: DollarSign },
+    { title: 'Bus Routes',   path: '/admin/bus',          icon: Bus },
     { title: 'ID Cards',     path: '/admin/id-cards',     icon: CreditCard },
+    { title: 'Transfer Cert', path: '/admin/transfer-certificate', icon: ScrollText },
     { title: 'Annual Transition', path: '/admin/transition', icon: RefreshCcw },
     { title: 'Settings',         path: '/admin/settings',   icon: Settings },
   ],

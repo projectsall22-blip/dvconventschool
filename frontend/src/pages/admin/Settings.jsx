@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Save, School, Calendar, ShieldCheck, Info } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Save, School, Calendar, ShieldCheck, Info, Smartphone, Upload, X } from 'lucide-react';
 import { useSettings } from '../../context/SettingsContext';
 import API from '../../api/axios';
 import Card from '../../components/common/Card';
@@ -12,8 +12,17 @@ const AdminSettings = () => {
     const [formData, setFormData] = useState(settings);
     const [loading, setLoading] = useState(false);
     const [toast, setToast] = useState(null);
+    const qrInputRef = useRef(null);
 
     useEffect(() => { setFormData(settings); }, [settings]);
+
+    const handleQrUpload = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => setFormData(f => ({ ...f, upiQrCode: ev.target.result }));
+        reader.readAsDataURL(file);
+    };
 
     const handleSave = async () => {
         setLoading(true);
@@ -95,6 +104,40 @@ const AdminSettings = () => {
                     </div>
                 </Card>
             </div>
+
+            {/* 3. UPI PAYMENT SETTINGS */}
+            <Card title="UPI Payment (Free Gateway)" icon={Smartphone}>
+                <div className="space-y-4">
+                    <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3 text-sm text-emerald-800">
+                        Students scan this QR or use the UPI ID to pay fees directly — zero transaction fees.
+                    </div>
+                    <Input
+                        label="School UPI ID"
+                        placeholder="e.g. schoolname@upi or 9876543210@paytm"
+                        value={formData.upiId || ''}
+                        onChange={e => setFormData(f => ({ ...f, upiId: e.target.value }))}
+                    />
+                    <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">UPI QR Code Image</label>
+                        {formData.upiQrCode ? (
+                            <div className="relative w-40 h-40">
+                                <img src={formData.upiQrCode} alt="UPI QR" className="w-40 h-40 object-contain border-2 border-slate-200 rounded-2xl" />
+                                <button onClick={() => setFormData(f => ({ ...f, upiQrCode: '' }))}
+                                    className="absolute -top-2 -right-2 w-6 h-6 bg-danger text-white rounded-full flex items-center justify-center hover:bg-red-700 transition-colors">
+                                    <X size={12} />
+                                </button>
+                            </div>
+                        ) : (
+                            <button onClick={() => qrInputRef.current?.click()}
+                                className="flex items-center gap-2 border-2 border-dashed border-slate-300 hover:border-primary rounded-2xl px-6 py-4 text-sm text-slate-500 hover:text-primary transition-colors">
+                                <Upload size={16} /> Upload QR Code Image
+                            </button>
+                        )}
+                        <input ref={qrInputRef} type="file" accept="image/*" className="hidden" onChange={handleQrUpload} />
+                        <p className="text-xs text-slate-400 mt-1.5">Download your QR from Google Pay / PhonePe / Paytm business app</p>
+                    </div>
+                </div>
+            </Card>
 
             <div className="flex justify-end">
                 <Button icon={Save} isLoading={loading} onClick={handleSave} className="w-full md:w-auto px-10">

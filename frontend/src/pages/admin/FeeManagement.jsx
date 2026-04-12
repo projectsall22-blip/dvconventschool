@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   DollarSign, Plus, Search, Users, TrendingUp, AlertCircle, Receipt,
   Trash2, Eye, Settings2, X, CheckCircle, Clock, CreditCard,
-  ArrowUpRight, Banknote, Smartphone, BadgeCheck,
+  ArrowUpRight, Banknote, Smartphone, BadgeCheck, ShieldCheck, Download,
 } from 'lucide-react';
 import API from '../../api/axios';
 import Card from '../../components/common/Card';
@@ -128,6 +128,7 @@ const CollectFeeModal = ({ onClose, onSuccess, academicYear, structures }) => {
     const [students, setStudents] = useState([]);
     const [selected, setSelected] = useState(null);
     const [structure, setStructure] = useState(null);
+    const [busRoute, setBusRoute]   = useState(null);
     const [admissionType, setAdmissionType] = useState('old');
     const [selectedMonths, setSelectedMonths] = useState(new Set());
     const [paidMonths, setPaidMonths] = useState(new Set()); // months already paid
@@ -150,7 +151,7 @@ const CollectFeeModal = ({ onClose, onSuccess, academicYear, structures }) => {
         setSelected(s); setStudents([]); setSearch(s.name);
         setSelectedMonths(new Set());
         setStructure(structures.find(x => x.className === s.class && x.admissionType === admissionType) || null);
-        // Fetch already paid months for this student
+        // Fetch already paid months + bus route for this student
         try {
             const res = await API.get(`/fees/student/${s._id}?academicYear=${academicYear}`);
             const paid = new Set(
@@ -160,7 +161,8 @@ const CollectFeeModal = ({ onClose, onSuccess, academicYear, structures }) => {
                     .filter(Boolean)
             );
             setPaidMonths(paid);
-        } catch { setPaidMonths(new Set()); }
+            setBusRoute(res.data.busRoute || null);
+        } catch { setPaidMonths(new Set()); setBusRoute(null); }
     };
 
     useEffect(() => {
@@ -179,6 +181,10 @@ const CollectFeeModal = ({ onClose, onSuccess, academicYear, structures }) => {
                 monthFeeMap[c.dueMonth] += c.amount;
             }
         });
+    }
+    // Auto-add bus fee if student is assigned to a route
+    if (busRoute?.monthlyFee > 0) {
+        MONTHS.forEach(m => { monthFeeMap[m] += busRoute.monthlyFee; });
     }
 
     const toggleMonth = (m) => {
@@ -257,6 +263,7 @@ const CollectFeeModal = ({ onClose, onSuccess, academicYear, structures }) => {
                     <div className="bg-blue-50 border border-blue-100 rounded-xl p-3">
                         <p className="font-bold text-primary">{selected.name}</p>
                         <p className="text-blue-600 text-sm">Class {selected.class} · {selected.admissionNo || selected.UID}</p>
+                        {busRoute && <p className="text-violet-600 text-xs mt-1">🚌 {busRoute.routeName} · +₹{busRoute.monthlyFee}/month</p>}
                         {!structure && <p className="text-amber-600 text-xs mt-1">No fee structure for Class {selected.class} ({admissionType})</p>}
                     </div>
                 )}
@@ -647,8 +654,32 @@ const FeeManagement = () => {
     const [showStructure, setShowStructure] = useState(false);
     const [editStructure, setEditStructure] = useState(null);
     const [ledgerStudent, setLedgerStudent] = useState(null);
+    const [pendingUpi, setPendingUpi] = useState([]);
+    const [pendingUpiCount, setPendingUpiCount] = useState(0);
+
+    // Daily report
+    const [reportDate, setReportDate] = useState(() => new Date().toISOString().split('T')[0]);
+    const [reportLoading, setReportLoading] = useState(false);
 
     const showToast = (message, type = 'success') => setToast({ message, type });
+
+    const handleDownloadDailyReport = async () => {
+        setReportLoading(true);
+        try {
+            const res = await API.get(`/fees/daily?date=${reportDate}&academicYear=${academicYear}`);
+            const { downloadDailyCollectionPdf } = await import('../../utils/dailyCollectionPdf.js');
+            downloadDailyCollectionPdf({
+                ...res.data,
+                schoolName:    settings?.schoolName,
+                schoolAddress: settings?.schoolAddress,
+                schoolPhone:   settings?.contactNumber,
+                schoolLogo:    settings?.schoolLogo,
+                academicYear,
+            });
+        } catch (err) {
+            showToast(err.response?.data?.message || 'Failed to generate report', 'error');
+        } finally { setReportLoading(false); }
+    };
 
     const loadData = useCallback(async () => {
         setLoading(true);
@@ -675,6 +706,22 @@ const FeeManagement = () => {
 
     useEffect(() => { loadData(); }, [loadData]);
     useEffect(() => { if (tab === 'defaulters') loadDefaulters(); }, [tab, loadDefaulters]);
+    useEffect(() => { if (tab === 'pending_upi') loadPendingUpi(); }, [tab]);
+
+    const loadPendingUpi = useCallback(async () => {
+        try {
+            const res = await API.get(`/fees/upi/pending?academicYear=${academicYear}`);
+            setPendingUpi(res.data);
+            setPendingUpiCount(res.data.length);
+        } catch { setPendingUpi([]); }
+    }, [academicYear]);
+
+    // Keep badge count fresh on every data load
+    useEffect(() => {
+        API.get(`/fees/upi/pending?academicYear=${academicYear}`)
+            .then(r => setPendingUpiCount(r.data.length))
+            .catch(() => {});
+    }, [academicYear]);
 
     const handleDeletePayment = async (id) => {
         if (!window.confirm('Delete this payment record?')) return;
@@ -686,6 +733,23 @@ const FeeManagement = () => {
         if (!window.confirm('Delete this fee structure?')) return;
         try { await API.delete(`/fees/structure/${id}`); showToast('Fee structure deleted'); loadData(); }
         catch (err) { showToast(err.message, 'error'); }
+    };
+
+    const handleConfirmUpi = async (groupReceiptNo) => {
+        try {
+            await API.put(`/fees/upi/confirm/${groupReceiptNo}`);
+            showToast('UPI payment confirmed');
+            loadPendingUpi(); loadData();
+        } catch (err) { showToast(err.message, 'error'); }
+    };
+
+    const handleRejectUpi = async (groupReceiptNo) => {
+        if (!window.confirm('Reject and delete this UPI payment submission?')) return;
+        try {
+            await API.put(`/fees/upi/reject/${groupReceiptNo}`);
+            showToast('Payment rejected', 'error');
+            loadPendingUpi();
+        } catch (err) { showToast(err.message, 'error'); }
     };
 
     const filteredPayments = payments.filter(p => {
@@ -736,25 +800,58 @@ const FeeManagement = () => {
                 <StatCard icon={Users} label="Fee Structures" value={structures.length} sub="classes configured" gradient="bg-gradient-to-br from-violet-500 to-purple-600" onClick={() => setTab('structures')} />
             </div>
 
-            {/* ── Today's Summary */}
+            {/* ── Today's Summary + Daily Report Download */}
             {summary?.today && (
-                <div className="grid grid-cols-3 gap-3">
-                    {[
-                        { icon: TrendingUp, iconBg: 'bg-emerald-100', iconColor: 'text-emerald-600', label: 'Today Total', value: fmt(summary.today.total), sub: `${summary.today.count} receipt${summary.today.count !== 1 ? 's' : ''} today` },
-                        { icon: Banknote,   iconBg: 'bg-amber-100',   iconColor: 'text-amber-600',   label: 'Today Cash',  value: fmt(summary.today.cash),  sub: 'Cash payments' },
-                        { icon: Smartphone, iconBg: 'bg-blue-100',    iconColor: 'text-blue-600',    label: 'Today Digital', value: fmt(summary.today.online), sub: 'GPay / PhonePe / Bank' },
-                    ].map(({ icon: Icon, iconBg, iconColor, label, value, sub }) => (
-                        <div key={label} className="bg-white rounded-2xl border border-slate-100 shadow-card p-4">
-                            <div className="flex items-center gap-2 mb-1">
-                                <div className={`w-7 h-7 ${iconBg} rounded-lg flex items-center justify-center`}>
-                                    <Icon size={14} className={iconColor} />
+                <div className="space-y-3">
+                    <div className="grid grid-cols-3 gap-3">
+                        {[
+                            { icon: TrendingUp, iconBg: 'bg-emerald-100', iconColor: 'text-emerald-600', label: 'Today Total', value: fmt(summary.today.total), sub: `${summary.today.count} receipt${summary.today.count !== 1 ? 's' : ''} today` },
+                            { icon: Banknote,   iconBg: 'bg-amber-100',   iconColor: 'text-amber-600',   label: 'Today Cash',  value: fmt(summary.today.cash),  sub: 'Cash payments' },
+                            { icon: Smartphone, iconBg: 'bg-blue-100',    iconColor: 'text-blue-600',    label: 'Today Digital', value: fmt(summary.today.online), sub: 'GPay / PhonePe / Bank' },
+                        ].map(({ icon: Icon, iconBg, iconColor, label, value, sub }) => (
+                            <div key={label} className="bg-white rounded-2xl border border-slate-100 shadow-card p-4">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <div className={`w-7 h-7 ${iconBg} rounded-lg flex items-center justify-center`}>
+                                        <Icon size={14} className={iconColor} />
+                                    </div>
+                                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">{label}</p>
                                 </div>
-                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">{label}</p>
+                                <p className="text-2xl font-black text-slate-900">{value}</p>
+                                <p className="text-xs text-secondary mt-0.5">{sub}</p>
                             </div>
-                            <p className="text-2xl font-black text-slate-900">{value}</p>
-                            <p className="text-xs text-secondary mt-0.5">{sub}</p>
+                        ))}
+                    </div>
+
+                    {/* Daily Collection Report download bar */}
+                    <div className="bg-white rounded-2xl border border-slate-100 shadow-card p-4 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                        <div className="flex items-center gap-2 shrink-0">
+                            <div className="w-8 h-8 bg-indigo-100 rounded-xl flex items-center justify-center">
+                                <Download size={15} className="text-primary" />
+                            </div>
+                            <div>
+                                <p className="text-sm font-bold text-slate-800">Daily Collection Report</p>
+                                <p className="text-xs text-secondary">All payments by admin + student portal for any date</p>
+                            </div>
                         </div>
-                    ))}
+                        <div className="flex items-center gap-2 sm:ml-auto">
+                            <input
+                                type="date"
+                                value={reportDate}
+                                onChange={e => setReportDate(e.target.value)}
+                                className="border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                            />
+                            <button
+                                onClick={handleDownloadDailyReport}
+                                disabled={reportLoading}
+                                className="flex items-center gap-2 bg-primary text-white text-sm font-bold px-4 py-2 rounded-xl hover:bg-indigo-700 transition-colors disabled:opacity-60 shrink-0">
+                                {reportLoading
+                                    ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                    : <Download size={14} />
+                                }
+                                Download PDF
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
 
@@ -766,6 +863,15 @@ const FeeManagement = () => {
                         {label}
                     </button>
                 ))}
+                <button onClick={() => setTab('pending_upi')}
+                    className={`relative px-5 py-2 rounded-lg text-sm font-semibold transition-all ${tab === 'pending_upi' ? 'bg-amber-500 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
+                    UPI Pending
+                    {pendingUpiCount > 0 && (
+                        <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-danger text-white text-[10px] font-black rounded-full flex items-center justify-center">
+                            {pendingUpiCount}
+                        </span>
+                    )}
+                </button>
             </div>
 
             {loading ? <div className="flex justify-center py-16"><LoadingSpinner size="lg" /></div> : (
@@ -980,6 +1086,70 @@ const FeeManagement = () => {
                                     </tr>
                                 ))}
                             </Table>
+                        </Card>
+                    )}
+
+                    {/* ── Pending UPI Tab */}
+                    {tab === 'pending_upi' && (
+                        <Card noPadding>
+                            <div className="p-4 border-b border-slate-50 flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <Smartphone size={16} className="text-amber-500" />
+                                    <span className="font-bold text-slate-700 text-sm">Pending UPI Payments</span>
+                                    {pendingUpi.length > 0 && (
+                                        <span className="bg-amber-100 text-amber-700 text-xs font-bold px-2 py-0.5 rounded-full">{pendingUpi.length} pending</span>
+                                    )}
+                                </div>
+                                <Button variant="outline" size="sm" onClick={loadPendingUpi}>Refresh</Button>
+                            </div>
+                            {pendingUpi.length === 0 ? (
+                                <div className="flex flex-col items-center py-16 text-slate-400">
+                                    <ShieldCheck size={40} className="mb-3 opacity-30" />
+                                    <p className="font-semibold">No pending UPI payments</p>
+                                    <p className="text-sm mt-1">All student UPI submissions have been reviewed</p>
+                                </div>
+                            ) : (
+                                <div className="divide-y divide-slate-50">
+                                    {pendingUpi.map(group => {
+                                        const first = group[0];
+                                        const totalAmt = group.reduce((s, p) => s + p.amountPaid, 0);
+                                        const months = group.map(p => p.month || 'General').join(', ');
+                                        return (
+                                            <div key={first.groupReceiptNo} className="px-5 py-4 hover:bg-amber-50/30 transition-colors">
+                                                <div className="flex items-start justify-between gap-4">
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                            <span className="font-bold text-slate-800">{first.student?.name}</span>
+                                                            <span className="text-xs text-secondary bg-slate-100 px-2 py-0.5 rounded-full">Class {first.student?.class}</span>
+                                                            <span className="text-xs font-mono text-slate-400">#{first.groupReceiptNo}</span>
+                                                        </div>
+                                                        <p className="text-sm text-slate-600 mt-1">Months: <span className="font-semibold">{months}</span></p>
+                                                        <div className="flex items-center gap-2 mt-1">
+                                                            <Smartphone size={12} className="text-blue-500" />
+                                                            <span className="text-xs font-mono text-blue-700 bg-blue-50 px-2 py-0.5 rounded">Txn: {first.transactionId}</span>
+                                                        </div>
+                                                        {first.paidBy && <p className="text-xs text-slate-400 mt-0.5">Paid by: {first.paidBy}</p>}
+                                                        <p className="text-xs text-slate-400 mt-0.5">{fmtDate(first.createdAt)}</p>
+                                                    </div>
+                                                    <div className="text-right shrink-0">
+                                                        <p className="font-black text-slate-900 text-lg">{fmt(totalAmt)}</p>
+                                                        <div className="flex gap-2 mt-2">
+                                                            <button onClick={() => handleConfirmUpi(first.groupReceiptNo)}
+                                                                className="flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold px-3 py-1.5 rounded-xl transition-colors">
+                                                                <CheckCircle size={13} /> Confirm
+                                                            </button>
+                                                            <button onClick={() => handleRejectUpi(first.groupReceiptNo)}
+                                                                className="flex items-center gap-1.5 bg-red-50 hover:bg-red-100 text-danger text-xs font-bold px-3 py-1.5 rounded-xl transition-colors">
+                                                                <X size={13} /> Reject
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
                         </Card>
                     )}
 

@@ -6,7 +6,7 @@ const {
     getFeeStructures, createFeeStructure, updateFeeStructure, deleteFeeStructure,
     collectFee, getPayments, deletePayment, getStudentFeeDetails, getFeeSummary, getDefaulters,
     getUpiInfo, submitUpiPayment, getPendingUpiPayments, confirmUpiPayment, rejectUpiPayment,
-    getClassFeeStatus,
+    getClassFeeStatus, getDailyCollection,
 } = require('../controllers/feeController');
 
 // Fee Structures (admin only)
@@ -22,6 +22,7 @@ router.delete('/payments/:id',     protect, authorize('admin'),           asyncH
 
 // Reports
 router.get   ('/summary',          protect, authorize('admin'),           asyncHandler(getFeeSummary));
+router.get   ('/daily',            protect, authorize('admin'),           asyncHandler(getDailyCollection));
 router.get   ('/defaulters',       protect, authorize('admin','teacher'), asyncHandler(getDefaulters));
 router.get   ('/class-fee-status', protect, authorize('teacher'),         asyncHandler(getClassFeeStatus));
 

@@ -9,7 +9,7 @@ const feePaymentSchema = new mongoose.Schema({
     discount:     { type: Number, default: 0 },
     fine:         { type: Number, default: 0 },
     amountPaid:   { type: Number, required: true },
-    paymentMode:  { type: String, enum: ['Cash','Bank Transfer','Google Pay','Phone Pay','Paytm','Online'], default: 'Cash' },
+    paymentMode:  { type: String, enum: ['Cash','Bank Transfer','Google Pay','PhonePe','Paytm','Online','UPI'], default: 'Cash' },
     transactionId:{ type: String, default: '' },
     receiptNo:    { type: String, unique: true },
     groupReceiptNo: { type: String, default: '' }, // shared across multi-month payments

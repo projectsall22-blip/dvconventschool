@@ -56,6 +56,7 @@ app.use('/api/homework',   require('./routes/homeworkRoutes'));
 app.use('/api/timetable',  require('./routes/timetableRoutes'));
 app.use('/api/datesheet',  require('./routes/datesheetRoutes'));
 app.use('/api/fees',       require('./routes/feeRoutes'));
+app.use('/api/bus',        require('./routes/busRoutes'));
 
 // Health check
 app.get('/', (_req, res) => {

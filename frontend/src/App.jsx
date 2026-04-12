@@ -49,7 +49,9 @@ import DatesheetBuilder from './pages/admin/DatesheetBuilder';
 import DatesheetView from './pages/shared/DatesheetView';
 import ResultGeneration from './pages/admin/ResultGeneration';
 import FeeManagement from './pages/admin/FeeManagement';
+import BusManagement from './pages/admin/BusManagement';
 import TeacherFeeStatus from './pages/teacher/FeeStatus';
+import TransferCertificate from './pages/admin/TransferCertificate';
 
 function App() {
   const { isAuthenticated, user, loading } = useAuth();
@@ -103,10 +105,12 @@ function App() {
         <Route path="marks" element={<RankList />} />
         <Route path="results" element={<ResultGeneration />} />
         <Route path="fees" element={<FeeManagement />} />
+        <Route path="bus" element={<BusManagement />} />
         <Route path="announcements" element={<AnnouncementManagement />} />
         <Route path="settings" element={<AdminSettings />} />
         <Route path="transition" element={<AnnualTransition />} />
         <Route path="id-cards" element={<IDCardGenerator />} />
+        <Route path="transfer-certificate" element={<TransferCertificate />} />
       </Route>
 
       {/* ================= TEACHER ROUTES ================= */}

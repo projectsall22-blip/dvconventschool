@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { FileBarChart2, Calendar, Printer, ChevronLeft, ChevronRight, User } from 'lucide-react';
 import API from '../../api/axios';
@@ -8,1010 +8,559 @@ import { useSettings } from '../../context/SettingsContext';
 import schoolLogo from '../../assets/school_logo.png';
 import principalSign from '../../assets/sign.png';
 
-/* ─── helpers ──────────────────────────────────────────────────────────── */
 const fmt = (d) => new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 const today = fmt(new Date());
 const PASS_MARK = 33;
-
-// Class progression map
 const CLASS_ORDER = ['Nursery', 'LKG', 'UKG', '1', '2', '3', '4', '5', '6', '7', '8'];
 const getNextClass = (currentClass, passed) => {
-  if (!passed) return currentClass; // fail → not promoted
+  if (!passed) return currentClass;
   const idx = CLASS_ORDER.indexOf(String(currentClass));
   if (idx === -1) return currentClass;
   if (idx >= CLASS_ORDER.length - 1) return 'Graduated';
   return CLASS_ORDER[idx + 1];
 };
-
-// Dynamic font scale based on subject count
 const scaledFont = (base, count) => {
   if (count <= 6)  return base + 3.5;
   if (count <= 8)  return base + 2.5;
   if (count <= 10) return base + 1.5;
   return base + 0.5;
 };
-
 const gradeFromPercent = (p) => {
-  if (p >= 91) return 'A1';
-  if (p >= 81) return 'A2';
-  if (p >= 71) return 'B1';
-  if (p >= 61) return 'B2';
-  if (p >= 51) return 'C1';
-  if (p >= 41) return 'C2';
-  if (p >= 33) return 'D';
-  if (p >= 21) return 'E';
-  return 'F';
+  if (p >= 91) return 'A1'; if (p >= 81) return 'A2'; if (p >= 71) return 'B1';
+  if (p >= 61) return 'B2'; if (p >= 51) return 'C1'; if (p >= 41) return 'C2';
+  if (p >= 33) return 'D';  if (p >= 21) return 'E';  return 'F';
 };
-
 const gradeColor = (g) => {
-  const map = {
-    A1: '#166534', A2: '#15803d', B1: '#1d4ed8', B2: '#2563eb',
-    C1: '#b45309', C2: '#d97706', D: '#ea580c', E: '#dc2626', F: '#991b1b',
-    A: '#15803d', B: '#2563eb', C: '#d97706',
-  };
+  const map = { A1:'#166534',A2:'#15803d',B1:'#1d4ed8',B2:'#2563eb',C1:'#b45309',C2:'#d97706',D:'#ea580c',E:'#dc2626',F:'#991b1b',A:'#15803d',B:'#2563eb',C:'#d97706' };
   return map[g] || '#374151';
 };
-
 const gradeBg = (g) => {
-  const map = {
-    A1: '#dcfce7', A2: '#d1fae5', B1: '#dbeafe', B2: '#eff6ff',
-    C1: '#fef3c7', C2: '#fffbeb', D: '#ffedd5', E: '#fee2e2', F: '#fce7f3',
-  };
+  const map = { A1:'#dcfce7',A2:'#d1fae5',B1:'#dbeafe',B2:'#eff6ff',C1:'#fef3c7',C2:'#fffbeb',D:'#ffedd5',E:'#fee2e2',F:'#fce7f3' };
   return map[g] || 'transparent';
 };
 
-/* ─── Bar Chart ─────────────────────────────────────────────────────────── */
-const BarChartTerm = ({ subjects, termKey, color, label }) => {
-  if (!subjects?.length) return null;
-  const BAR_W = 30, GAP = 12, H = 90, LABEL_H = 30;
-  const W = subjects.length * (BAR_W + GAP) + 30;
-  return (
-    <svg width={W} height={H + LABEL_H} style={{ overflow: 'visible' }}>
-      {[0, 25, 50, 75, 100].map(v => (
-        <g key={v}>
-          <line x1={24} x2={W} y1={H - (v / 100) * H} y2={H - (v / 100) * H}
-            stroke={v === 0 ? '#9ca3af' : '#e5e7eb'} strokeWidth={v === 0 ? 1 : 0.5} />
-          <text x={20} y={H - (v / 100) * H + 3} textAnchor="end" fontSize="8" fill="#9ca3af">{v}</text>
-        </g>
-      ))}
-      {subjects.map((sub, i) => {
-        const x = 26 + i * (BAR_W + GAP);
-        const t = sub[termKey];
-        const val = typeof t?.total === 'number' ? t.total : 0;
-        const max = t?.maxTotal || 100;
-        const pct = Math.min(val / max, 1);
-        const h = pct * H;
-        const barColor = pct >= 0.75 ? '#059669' : pct >= 0.5 ? '#2563eb' : pct >= 0.33 ? '#d97706' : '#dc2626';
-        return (
-          <g key={i}>
-            <rect x={x + 2} y={H - h + 2} width={BAR_W} height={h} fill="rgba(0,0,0,0.06)" rx="3" />
-            <rect x={x} y={H - h} width={BAR_W} height={h} fill={color || barColor} rx="3" />
-            {val > 0 && (
-              <text x={x + BAR_W / 2} y={H - h - 3} textAnchor="middle" fontSize="9" fill="#374151" fontWeight="700">
-                {val}
-              </text>
-            )}
-            <text x={x + BAR_W / 2} y={H + 12} textAnchor="middle" fontSize="9" fill="#374151">
-              {sub.subjectName?.substring(0, 5) || ''}
-            </text>
-          </g>
-        );
-      })}
-      <rect x={26} y={H + 20} width={8} height={8} fill={color || '#2563eb'} rx="2" />
-      <text x={38} y={H + 27} fontSize="9" fill="#374151" fontWeight="600">{label}</text>
-    </svg>
-  );
-};
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   TERM MARKSHEET
-═══════════════════════════════════════════════════════════════════════════ */
 const TermMarksheet = ({ student, termKey, termLabel, schoolInfo, academicYear }) => {
   const subjects = student.subjects || [];
-
   const enriched = subjects.map(s => {
     if (s.term1 && s.term2) return s;
     const obtained = s.marksObtained ?? 0;
     const maxM = s.maxMarks ?? 100;
-    return {
-      ...s,
-      term1: { periodicTest: null, noteBooks: null, subEnrichment: null, halfYearlyExam: null, total: 0, maxTotal: maxM, grade: '—' },
-      term2: { periodicTest: null, noteBooks: null, subEnrichment: null, yearlyExam: obtained, total: obtained, maxTotal: maxM, grade: s.grade || gradeFromPercent((obtained / maxM) * 100) },
-    };
+    return { ...s, term1: { periodicTest:null,noteBooks:null,subEnrichment:null,halfYearlyExam:null,total:0,maxTotal:maxM,grade:'--' }, term2: { periodicTest:null,noteBooks:null,subEnrichment:null,yearlyExam:obtained,total:obtained,maxTotal:maxM,grade:s.grade||gradeFromPercent((obtained/maxM)*100) } };
   });
-
-  const grandTotal = enriched.reduce((a, s) => a + (typeof s[termKey]?.total === 'number' ? s[termKey].total : 0), 0);
-  const grandMax   = enriched.reduce((a, s) => a + (s[termKey]?.maxTotal || 0), 0);
-  const percentage = grandMax > 0 ? ((grandTotal / grandMax) * 100).toFixed(2) : '0.00';
+  const grandTotal = enriched.reduce((a,s) => a+(typeof s[termKey]?.total==='number'?s[termKey].total:0),0);
+  const grandMax   = enriched.reduce((a,s) => a+(s[termKey]?.maxTotal||0),0);
+  const percentage = grandMax>0?((grandTotal/grandMax)*100).toFixed(2):'0.00';
   const pctNum     = parseFloat(percentage);
   const overallGrade = gradeFromPercent(pctNum);
-
   const coScholastic = student.coScholastic || {};
   const attendance   = student.attendance   || {};
   const remark = student.teacherRemark || 'Has done well.';
   const passed = pctNum >= PASS_MARK;
   const nextClass = getNextClass(student.class, passed);
-  const resultQualified = passed
-    ? `QUALIFIED FOR ADMISSION TO CLASS - ${nextClass}`
-    : `NOT PROMOTED — DETAINED IN CLASS - ${student.class || ''}`;
-
-  const apiBase  = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
-  const photoSrc = student.profileImage
-    ? (student.profileImage.startsWith('data:') ? student.profileImage : `${apiBase}${student.profileImage}`)
-    : null;
-
+  const resultQualified = passed ? `QUALIFIED FOR ADMISSION TO CLASS - ${nextClass}` : `NOT PROMOTED -- DETAINED IN CLASS - ${student.class||''}`;
+  const apiBase  = import.meta.env.VITE_API_URL?.replace('/api','') || 'http://localhost:5000';
+  const photoSrc = student.profileImage ? (student.profileImage.startsWith('data:') ? student.profileImage : `${apiBase}${student.profileImage}`) : null;
   const isT1 = termKey === 'term1';
-  const BLUE = '#1a3a6b';
-  const BLUE_LIGHT = '#e8edf7';
-  const ACCENT = isT1 ? '#6d28d9' : '#b45309';
+  const BLUE = '#1a3a6b'; const BLUE_LIGHT = '#e8edf7'; const ACCENT = isT1 ? '#6d28d9' : '#b45309';
   const subCount = enriched.length;
   const fs = (b) => scaledFont(b, subCount);
   const rowPad = subCount > 8 ? '2.5px 5px' : '4px 5px';
-
-  const TH = ({ children, colSpan, rowSpan, style = {} }) => (
-    <th colSpan={colSpan} rowSpan={rowSpan} style={{
-      border: `1px solid ${BLUE}`, padding: '4px 5px', fontSize: `${fs(8.5)}px`,
-      fontWeight: '800', textAlign: 'center', background: BLUE, color: 'white',
-      whiteSpace: 'pre-line', verticalAlign: 'middle', letterSpacing: '0.3px', ...style,
-    }}>{children}</th>
+  const TH = ({ children, colSpan, rowSpan, style={} }) => (
+    <th colSpan={colSpan} rowSpan={rowSpan} style={{ border:`1px solid ${BLUE}`,padding:'4px 5px',fontSize:`${fs(8.5)}px`,fontWeight:'800',textAlign:'center',background:BLUE,color:'white',whiteSpace:'pre-line',verticalAlign:'middle',letterSpacing:'0.3px',...style }}>{children}</th>
   );
-
-  const TD = ({ children, style = {} }) => (
-    <td style={{
-      border: '1px solid #c7d2e8', padding: rowPad, fontSize: `${fs(10)}px`,
-      textAlign: 'center', verticalAlign: 'middle', ...style,
-    }}>
-      {children === null || children === undefined ? <span style={{ color: '#d1d5db' }}>—</span> : children}
+  const TD = ({ children, style={} }) => (
+    <td style={{ border:'1px solid #c7d2e8',padding:rowPad,fontSize:`${fs(10)}px`,textAlign:'center',verticalAlign:'middle',...style }}>
+      {children===null||children===undefined?<span style={{color:'#d1d5db'}}>--</span>:children}
     </td>
   );
-
   return (
-    <div className="marksheet-page bg-white" style={{
-      width: '210mm', height: '297mm', margin: '0 auto', padding: '7mm 9mm',
-      fontFamily: '"Times New Roman", Times, serif', fontSize: '12px',
-      boxSizing: 'border-box', pageBreakAfter: 'always', position: 'relative',
-      background: '#fff', display: 'flex', flexDirection: 'column', overflow: 'hidden',
-    }}>
-      {/* Decorative border layers */}
-      <div style={{ position: 'absolute', inset: '3.5mm', border: `3px solid ${BLUE}`, pointerEvents: 'none', zIndex: 0, borderRadius: '3px' }} />
-      <div style={{ position: 'absolute', inset: '5.5mm', border: `1px solid #93afd4`, pointerEvents: 'none', zIndex: 0, borderRadius: '2px' }} />
-
-      {/* Watermark */}
-      {schoolInfo.schoolLogo && (
-        <img src={schoolInfo.schoolLogo} alt="" style={{
-          position: 'absolute', top: '50%', left: '50%',
-          transform: 'translate(-50%,-50%)', width: '200px', opacity: 0.05,
-          pointerEvents: 'none', zIndex: 0,
-        }} />
-      )}
-
-      <div style={{ position: 'relative', zIndex: 1, flex: 1, display: 'flex', flexDirection: 'column' }}>
-
-        {/* ══ HEADER ══ */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px', paddingBottom: '8px', borderBottom: `3px double ${BLUE}` }}>
-          {/* Left logo with decorative ring */}
-          <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            width: '80px', height: '80px', borderRadius: '50%',
-            background: `radial-gradient(circle, #e8edf7 60%, #c7d2e8 100%)`,
-            border: `3px solid ${BLUE}`, boxShadow: '0 2px 8px rgba(26,58,107,0.25)',
-            padding: '4px',
-          }}>
-            <img src={schoolInfo.schoolLogo || schoolLogo} alt="logo"
-              style={{ width: '68px', height: '68px', objectFit: 'contain', borderRadius: '50%' }} />
+    <div className="marksheet-page bg-white" style={{ width:'210mm',height:'297mm',margin:'0 auto',padding:'7mm 9mm',fontFamily:'"Times New Roman",Times,serif',fontSize:'12px',boxSizing:'border-box',pageBreakAfter:'always',position:'relative',background:'#fff',display:'flex',flexDirection:'column',overflow:'hidden' }}>
+      <div style={{position:'absolute',inset:'3.5mm',border:`3px solid ${BLUE}`,pointerEvents:'none',zIndex:0,borderRadius:'3px'}} />
+      <div style={{position:'absolute',inset:'5.5mm',border:`1px solid #93afd4`,pointerEvents:'none',zIndex:0,borderRadius:'2px'}} />
+      {schoolInfo.schoolLogo && <img src={schoolInfo.schoolLogo} alt="" style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',width:'200px',opacity:0.05,pointerEvents:'none',zIndex:0}} />}
+      <div style={{position:'relative',zIndex:1,flex:1,display:'flex',flexDirection:'column'}}>
+        <div style={{display:'flex',alignItems:'center',gap:'12px',marginBottom:'8px',paddingBottom:'8px',borderBottom:`3px double ${BLUE}`}}>
+          <div style={{flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',width:'80px',height:'80px',borderRadius:'50%',background:`radial-gradient(circle,#e8edf7 60%,#c7d2e8 100%)`,border:`3px solid ${BLUE}`,boxShadow:'0 2px 8px rgba(26,58,107,0.25)',padding:'4px'}}>
+            <img src={schoolInfo.schoolLogo||schoolLogo} alt="logo" style={{width:'68px',height:'68px',objectFit:'contain',borderRadius:'50%'}} />
           </div>
-
-          {/* Center school info */}
-          <div style={{ flex: 1, textAlign: 'center' }}>
-            {/* School name with decorative lines */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '3px' }}>
-              <div style={{ flex: 1, height: '1.5px', background: `linear-gradient(to right, transparent, ${BLUE})` }} />
-              <div style={{
-                fontSize: '24px', fontWeight: '900', color: BLUE,
-                fontFamily: 'Georgia, "Times New Roman", serif',
-                letterSpacing: '1px', lineHeight: 1.15,
-                textShadow: '0 1px 2px rgba(26,58,107,0.15)',
-              }}>
-                {schoolInfo.schoolName}
-              </div>
-              <div style={{ flex: 1, height: '1.5px', background: `linear-gradient(to left, transparent, ${BLUE})` }} />
+          <div style={{flex:1,textAlign:'center'}}>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'8px',marginBottom:'3px'}}>
+              <div style={{flex:1,height:'1.5px',background:`linear-gradient(to right,transparent,${BLUE})`}} />
+              <div style={{fontSize:'24px',fontWeight:'900',color:BLUE,fontFamily:'Georgia,"Times New Roman",serif',letterSpacing:'1px',lineHeight:1.15,textShadow:'0 1px 2px rgba(26,58,107,0.15)'}}>{schoolInfo.schoolName}</div>
+              <div style={{flex:1,height:'1.5px',background:`linear-gradient(to left,transparent,${BLUE})`}} />
             </div>
-
-            {/* Slogan */}
-            <div style={{
-              fontSize: '11px', color: '#1e4d8c', fontFamily: 'Georgia, serif',
-              fontStyle: 'italic', letterSpacing: '0.5px', marginBottom: '3px',
-            }}>
-              ❝ {schoolInfo.schoolSlogan || 'Affiliated to Central Board of Secondary Education'} ❞
+            <div style={{fontSize:'11px',color:'#1e4d8c',fontFamily:'Georgia,serif',fontStyle:'italic',letterSpacing:'0.5px',marginBottom:'3px'}}>
+              {schoolInfo.schoolSlogan||'Affiliated to Central Board of Secondary Education'}
             </div>
-
-            {/* Affiliation + code row */}
             {schoolInfo.affiliationNumber && (
-              <div style={{
-                display: 'inline-flex', gap: '12px', fontSize: '9px', color: '#374151',
-                background: '#e8edf7', borderRadius: '20px', padding: '2px 14px',
-                border: `1px solid #c7d2e8`, marginBottom: '3px',
-              }}>
-                <span>Affil. No.: <b style={{ color: BLUE }}>{schoolInfo.affiliationNumber}</b></span>
-                {schoolInfo.schoolCode && <span>|&nbsp; School Code: <b style={{ color: BLUE }}>{schoolInfo.schoolCode}</b></span>}
+              <div style={{display:'inline-flex',gap:'12px',fontSize:'9px',color:'#374151',background:'#e8edf7',borderRadius:'20px',padding:'2px 14px',border:`1px solid #c7d2e8`,marginBottom:'3px'}}>
+                <span>Affil. No.: <b style={{color:BLUE}}>{schoolInfo.affiliationNumber}</b></span>
+                {schoolInfo.schoolCode && <span>|&nbsp;School Code: <b style={{color:BLUE}}>{schoolInfo.schoolCode}</b></span>}
               </div>
             )}
-
-            {/* Address */}
-            <div style={{
-              fontSize: '10px', color: '#4b5563',
-              fontFamily: 'Arial, sans-serif', letterSpacing: '0.3px',
-            }}>
-              📍 {schoolInfo.schoolAddress}
+            <div style={{fontSize:'10px',color:'#4b5563',fontFamily:'Arial,sans-serif',letterSpacing:'0.3px'}}>
+              {schoolInfo.schoolAddress}
             </div>
           </div>
-
-          {/* Right logo with decorative ring */}
-          <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            width: '80px', height: '80px', borderRadius: '50%',
-            background: `radial-gradient(circle, #e8edf7 60%, #c7d2e8 100%)`,
-            border: `3px solid ${BLUE}`, boxShadow: '0 2px 8px rgba(26,58,107,0.25)',
-            padding: '4px',
-          }}>
-            <img src={schoolInfo.schoolLogo || schoolLogo} alt="logo2"
-              style={{ width: '68px', height: '68px', objectFit: 'contain', borderRadius: '50%' }} />
+          <div style={{flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',width:'80px',height:'80px',borderRadius:'50%',background:`radial-gradient(circle,#e8edf7 60%,#c7d2e8 100%)`,border:`3px solid ${BLUE}`,boxShadow:'0 2px 8px rgba(26,58,107,0.25)',padding:'4px'}}>
+            <img src={schoolInfo.schoolLogo||schoolLogo} alt="logo2" style={{width:'68px',height:'68px',objectFit:'contain',borderRadius:'50%'}} />
           </div>
         </div>
-
-        {/* ══ TITLE BAND ══ */}
-        <div style={{
-          background: `linear-gradient(135deg, ${BLUE} 0%, #1e4d8c 100%)`,
-          color: 'white', textAlign: 'center', padding: '6px 12px',
-          fontSize: '15px', fontWeight: '900', letterSpacing: '3px',
-          marginBottom: '10px', fontFamily: 'Arial, sans-serif',
-          borderRadius: '3px', boxShadow: '0 2px 6px rgba(26,58,107,0.3)',
-        }}>
-          {termLabel} RESULT &nbsp;—&nbsp; SESSION {academicYear}
+        <div style={{background:`linear-gradient(135deg,${BLUE} 0%,#1e4d8c 100%)`,color:'white',textAlign:'center',padding:'6px 12px',fontSize:'15px',fontWeight:'900',letterSpacing:'3px',marginBottom:'10px',fontFamily:'Arial,sans-serif',borderRadius:'3px',boxShadow:'0 2px 6px rgba(26,58,107,0.3)'}}>
+          {termLabel} RESULT &nbsp;--&nbsp; SESSION {academicYear}
         </div>
-
-        {/* ══ STUDENT INFO ══ */}
-        <div style={{ display: 'flex', marginBottom: '10px', border: `1.5px solid ${BLUE}`, borderRadius: '4px', overflow: 'hidden' }}>
-          <div style={{ flex: 1, padding: '8px 12px', background: BLUE_LIGHT }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <div style={{display:'flex',marginBottom:'10px',border:`1.5px solid ${BLUE}`,borderRadius:'4px',overflow:'hidden'}}>
+          <div style={{flex:1,padding:'8px 12px',background:BLUE_LIGHT}}>
+            <table style={{width:'100%',borderCollapse:'collapse'}}>
               <tbody>
                 <tr>
-                  <td style={{ fontSize: '11px', paddingBottom: '4px', width: '52%' }}>
-                    <span style={{ color: '#6b7280', fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Admission No.</span><br />
-                    <b style={{ fontSize: '12px', color: '#111827' }}>{student.admissionNo || student.UID || '—'}</b>
+                  <td style={{fontSize:'11px',paddingBottom:'4px',width:'52%'}}>
+                    <span style={{color:'#6b7280',fontSize:'10px',fontWeight:'700',textTransform:'uppercase',letterSpacing:'0.5px'}}>Admission No.</span><br/>
+                    <b style={{fontSize:'12px',color:'#111827'}}>{student.admissionNo||student.UID||'--'}</b>
                   </td>
-                  <td style={{ fontSize: '11px', paddingBottom: '4px' }}>
-                    <span style={{ color: '#6b7280', fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Class &amp; Sec.</span><br />
-                    <b style={{ fontSize: '12px', color: '#111827' }}>{student.class || '—'}</b>
-                  </td>
-                </tr>
-                <tr>
-                  <td style={{ fontSize: '11px', paddingBottom: '4px' }} colSpan={2}>
-                    <span style={{ color: '#6b7280', fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Student Name</span><br />
-                    <b style={{ fontSize: '14px', color: BLUE }}>{student.name}</b>
+                  <td style={{fontSize:'11px',paddingBottom:'4px'}}>
+                    <span style={{color:'#6b7280',fontSize:'10px',fontWeight:'700',textTransform:'uppercase',letterSpacing:'0.5px'}}>Class &amp; Sec.</span><br/>
+                    <b style={{fontSize:'12px',color:'#111827'}}>{student.class||'--'}</b>
                   </td>
                 </tr>
                 <tr>
-                  <td style={{ fontSize: '11px', paddingBottom: '3px' }}>
-                    <span style={{ color: '#6b7280', fontSize: '10px' }}>Mother's Name</span><br />
-                    <span style={{ fontSize: '11.5px' }}>{student.motherName || '—'}</span>
-                  </td>
-                  <td style={{ fontSize: '11px', paddingBottom: '3px' }}>
-                    <span style={{ color: '#6b7280', fontSize: '10px' }}>Date of Birth</span><br />
-                    <span style={{ fontSize: '11.5px' }}>{student.dob ? fmt(student.dob) : '—'}</span>
+                  <td style={{fontSize:'11px',paddingBottom:'4px'}} colSpan={2}>
+                    <span style={{color:'#6b7280',fontSize:'10px',fontWeight:'700',textTransform:'uppercase',letterSpacing:'0.5px'}}>Student Name</span><br/>
+                    <b style={{fontSize:'14px',color:BLUE}}>{student.name}</b>
                   </td>
                 </tr>
                 <tr>
-                  <td style={{ fontSize: '11px', paddingBottom: '3px' }}>
-                    <span style={{ color: '#6b7280', fontSize: '10px' }}>Father's Name</span><br />
-                    <span style={{ fontSize: '11.5px' }}>{student.fatherName || '—'}</span>
+                  <td style={{fontSize:'11px',paddingBottom:'3px'}}>
+                    <span style={{color:'#6b7280',fontSize:'10px'}}>Mother&apos;s Name</span><br/>
+                    <span style={{fontSize:'11.5px'}}>{student.motherName||'--'}</span>
                   </td>
-                  <td style={{ fontSize: '11px' }}>
-                    <span style={{ color: '#6b7280', fontSize: '10px' }}>Address</span><br />
-                    <span style={{ fontSize: '11px' }}>{student.address || '—'}</span>
+                  <td style={{fontSize:'11px',paddingBottom:'3px'}}>
+                    <span style={{color:'#6b7280',fontSize:'10px'}}>Date of Birth</span><br/>
+                    <span style={{fontSize:'11.5px'}}>{student.dob?fmt(student.dob):'--'}</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td style={{fontSize:'11px',paddingBottom:'3px'}}>
+                    <span style={{color:'#6b7280',fontSize:'10px'}}>Father&apos;s Name</span><br/>
+                    <span style={{fontSize:'11.5px'}}>{student.fatherName||'--'}</span>
+                  </td>
+                  <td style={{fontSize:'11px'}}>
+                    <span style={{color:'#6b7280',fontSize:'10px'}}>Address</span><br/>
+                    <span style={{fontSize:'11px'}}>{student.address||'--'}</span>
                   </td>
                 </tr>
               </tbody>
             </table>
           </div>
-          <div style={{
-            width: '80px', flexShrink: 0, borderLeft: `1.5px solid ${BLUE}`,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            background: '#f0f4fb', padding: '8px',
-          }}>
-            <div style={{
-              width: '62px', height: '76px', border: `2px solid ${BLUE}`,
-              borderRadius: '3px', overflow: 'hidden',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              background: '#e5e7eb', boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
-            }}>
-              {photoSrc
-                ? <img src={photoSrc} alt={student.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                : <User size={26} color="#9ca3af" />}
+          <div style={{width:'80px',flexShrink:0,borderLeft:`1.5px solid ${BLUE}`,display:'flex',alignItems:'center',justifyContent:'center',background:'#f0f4fb',padding:'8px'}}>
+            <div style={{width:'62px',height:'76px',border:`2px solid ${BLUE}`,borderRadius:'3px',overflow:'hidden',display:'flex',alignItems:'center',justifyContent:'center',background:'#e5e7eb',boxShadow:'0 2px 6px rgba(0,0,0,0.15)'}}>
+              {photoSrc?<img src={photoSrc} alt={student.name} style={{width:'100%',height:'100%',objectFit:'cover'}} />:<User size={26} color="#9ca3af" />}
             </div>
           </div>
         </div>
-
-        {/* ══ SCHOLASTIC HEADING ══ */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '5px' }}>
-          <div style={{ flex: 1, height: '1px', background: '#c7d2e8' }} />
-          <div style={{
-            textAlign: 'center', fontWeight: '900', fontSize: '13px',
-            fontFamily: 'Arial, sans-serif', color: BLUE, letterSpacing: '1px', padding: '0 10px',
-          }}>
-            ✦ Scholastic Area — {termLabel} ✦
+        <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'5px'}}>
+          <div style={{flex:1,height:'1px',background:'#c7d2e8'}} />
+          <div style={{textAlign:'center',fontWeight:'900',fontSize:'13px',fontFamily:'Arial,sans-serif',color:BLUE,letterSpacing:'1px',padding:'0 10px'}}>
+            Scholastic Area -- {termLabel}
           </div>
-          <div style={{ flex: 1, height: '1px', background: '#c7d2e8' }} />
+          <div style={{flex:1,height:'1px',background:'#c7d2e8'}} />
         </div>
-
-        {/* ══ MARKS TABLE ══ */}
-        <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '10px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
+        <table style={{width:'100%',borderCollapse:'collapse',marginBottom:'10px',boxShadow:'0 1px 4px rgba(0,0,0,0.08)'}}>
           <thead>
             <tr>
-              <TH rowSpan={2} style={{ width: '130px', fontSize: '12px', letterSpacing: '0.5px' }}>SUBJECTS</TH>
-              <TH style={{ background: '#1e4080' }}>Periodic{'\n'}Test{'\n'}(10)</TH>
-              <TH style={{ background: '#1e4080' }}>Note{'\n'}Books{'\n'}(5)</TH>
-              <TH style={{ background: '#1e4080' }}>Sub.{'\n'}Enrl.{'\n'}(5)</TH>
-              <TH style={{ background: '#1e4080' }}>{isT1 ? 'Half Yearly\nExam\n(80)' : 'Final\nExam\n(80)'}</TH>
-              <TH style={{ background: '#14326e', fontSize: '11px' }}>Marks{'\n'}Obtained{'\n'}(100)</TH>
-              <TH style={{ background: '#14326e' }}>Grade</TH>
+              <TH rowSpan={2} style={{width:'130px',fontSize:'12px',letterSpacing:'0.5px'}}>SUBJECTS</TH>
+              <TH style={{background:'#1e4080'}}>{'Periodic\nTest\n(10)'}</TH>
+              <TH style={{background:'#1e4080'}}>{'Note\nBooks\n(5)'}</TH>
+              <TH style={{background:'#1e4080'}}>{'Sub.\nEnrl.\n(5)'}</TH>
+              <TH style={{background:'#1e4080'}}>{isT1?'Half Yearly\nExam\n(80)':'Final\nExam\n(80)'}</TH>
+              <TH style={{background:'#14326e',fontSize:'11px'}}>{'Marks\nObtained\n(100)'}</TH>
+              <TH style={{background:'#14326e'}}>Grade</TH>
             </tr>
           </thead>
           <tbody>
-            {enriched.map((sub, i) => {
+            {enriched.map((sub,i) => {
               const t = sub[termKey];
-              const total = typeof t?.total === 'number' && t.total > 0 ? t.total : null;
+              const total = typeof t?.total==='number'&&t.total>0?t.total:null;
               const grade = t?.grade;
-              const failed = total !== null && (total / (t?.maxTotal || 100)) * 100 < PASS_MARK;
+              const failed = total!==null&&(total/(t?.maxTotal||100))*100<PASS_MARK;
               return (
-                <tr key={i} style={{ background: i % 2 === 0 ? '#f8faff' : '#ffffff' }}>
-                  <td style={{
-                    border: '1px solid #c7d2e8', padding: rowPad, fontSize: `${fs(11.5)}px`,
-                    fontWeight: '700', fontFamily: 'Arial, sans-serif', color: '#1f2937',
-                    borderLeft: `3px solid ${ACCENT}`,
-                  }}>
-                    {sub.subjectName}
-                  </td>
+                <tr key={i} style={{background:i%2===0?'#f8faff':'#ffffff'}}>
+                  <td style={{border:'1px solid #c7d2e8',padding:rowPad,fontSize:`${fs(11.5)}px`,fontWeight:'700',fontFamily:'Arial,sans-serif',color:'#1f2937',borderLeft:`3px solid ${ACCENT}`}}>{sub.subjectName}</td>
                   <TD>{t?.periodicTest}</TD>
                   <TD>{t?.noteBooks}</TD>
                   <TD>{t?.subEnrichment}</TD>
-                  <TD>{isT1 ? t?.halfYearlyExam : t?.yearlyExam}</TD>
-                  <TD style={{
-                    fontWeight: '800', fontSize: '12px',
-                    color: failed ? '#dc2626' : '#111827',
-                    background: failed ? '#fef2f2' : 'transparent',
-                  }}>
-                    {total ?? <span style={{ color: '#d1d5db' }}>—</span>}
-                  </TD>
-                  <TD style={{
-                    fontWeight: '900', fontSize: '12px',
-                    color: gradeColor(grade),
-                    background: grade ? gradeBg(grade) : 'transparent',
-                  }}>
-                    {grade || <span style={{ color: '#d1d5db' }}>—</span>}
-                  </TD>
+                  <TD>{isT1?t?.halfYearlyExam:t?.yearlyExam}</TD>
+                  <TD style={{fontWeight:'800',fontSize:'12px',color:failed?'#dc2626':'#111827',background:failed?'#fef2f2':'transparent'}}>{total??<span style={{color:'#d1d5db'}}>--</span>}</TD>
+                  <TD style={{fontWeight:'900',fontSize:'12px',color:gradeColor(grade),background:grade?gradeBg(grade):'transparent'}}>{grade||<span style={{color:'#d1d5db'}}>--</span>}</TD>
                 </tr>
               );
             })}
           </tbody>
           <tfoot>
-            <tr style={{ background: '#e8edf7' }}>
-              <td colSpan={5} style={{ border: `1px solid ${BLUE}`, padding: '5px 10px', fontWeight: '900', fontSize: '12px', textAlign: 'right', fontFamily: 'Arial, sans-serif', color: BLUE }}>
-                Grand Total
-              </td>
-              <td style={{ border: `1px solid ${BLUE}`, padding: '4px 6px', fontWeight: '900', fontSize: '13px', textAlign: 'center', color: BLUE }}>
-                {grandTotal}/{grandMax}
-              </td>
-              <td style={{ border: `1px solid ${BLUE}` }} />
+            <tr style={{background:'#e8edf7'}}>
+              <td colSpan={5} style={{border:`1px solid ${BLUE}`,padding:'5px 10px',fontWeight:'900',fontSize:'12px',textAlign:'right',fontFamily:'Arial,sans-serif',color:BLUE}}>Grand Total</td>
+              <td style={{border:`1px solid ${BLUE}`,padding:'4px 6px',fontWeight:'900',fontSize:'13px',textAlign:'center',color:BLUE}}>{grandTotal}/{grandMax}</td>
+              <td style={{border:`1px solid ${BLUE}`}} />
             </tr>
-            <tr style={{ background: BLUE }}>
-              <td colSpan={4} style={{ border: `1px solid ${BLUE}`, padding: '4px 10px', fontWeight: '900', fontSize: '12px', textAlign: 'right', color: 'white', fontFamily: 'Arial, sans-serif' }}>
-                Percentage
-              </td>
-              <td style={{ border: `1px solid ${BLUE}`, padding: '4px 8px', fontWeight: '900', fontSize: '14px', textAlign: 'center', color: '#fcd34d' }}>
-                {percentage}%
-              </td>
-              <td style={{ border: `1px solid ${BLUE}`, padding: '4px 6px', fontWeight: '900', fontSize: '14px', textAlign: 'center', color: '#fcd34d' }}>
-                {overallGrade}
-              </td>
-              <td style={{ border: `1px solid ${BLUE}` }} />
+            <tr style={{background:BLUE}}>
+              <td colSpan={4} style={{border:`1px solid ${BLUE}`,padding:'4px 10px',fontWeight:'900',fontSize:'12px',textAlign:'right',color:'white',fontFamily:'Arial,sans-serif'}}>Percentage</td>
+              <td style={{border:`1px solid ${BLUE}`,padding:'4px 8px',fontWeight:'900',fontSize:'14px',textAlign:'center',color:'#fcd34d'}}>{percentage}%</td>
+              <td style={{border:`1px solid ${BLUE}`,padding:'4px 6px',fontWeight:'900',fontSize:'14px',textAlign:'center',color:'#fcd34d'}}>{overallGrade}</td>
+              <td style={{border:`1px solid ${BLUE}`}} />
             </tr>
           </tfoot>
         </table>
-
-        {/* ══ CO-SCHOLASTIC ══ */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '5px' }}>
-          <div style={{ flex: 1, height: '1px', background: '#c7d2e8' }} />
-          <div style={{ textAlign: 'center', fontWeight: '900', fontSize: '12px', fontFamily: 'Arial, sans-serif', color: BLUE, padding: '0 10px', letterSpacing: '0.5px' }}>
-            ✦ Co-Scholastic Area <span style={{ fontWeight: '400', fontSize: '10px', color: '#6b7280' }}>[on a 3 point (A–C) scale]</span> ✦
+        <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'5px'}}>
+          <div style={{flex:1,height:'1px',background:'#c7d2e8'}} />
+          <div style={{textAlign:'center',fontWeight:'900',fontSize:'12px',fontFamily:'Arial,sans-serif',color:BLUE,padding:'0 10px',letterSpacing:'0.5px'}}>
+            Co-Scholastic Area <span style={{fontWeight:'400',fontSize:'10px',color:'#6b7280'}}>[on a 3 point (A-C) scale]</span>
           </div>
-          <div style={{ flex: 1, height: '1px', background: '#c7d2e8' }} />
+          <div style={{flex:1,height:'1px',background:'#c7d2e8'}} />
         </div>
-
-        <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '6px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+        <table style={{width:'100%',borderCollapse:'collapse',marginBottom:'6px',boxShadow:'0 1px 3px rgba(0,0,0,0.06)'}}>
           <thead>
             <tr>
-              <th style={{ border: `1px solid ${BLUE}`, padding: '4px 8px', fontSize: '11px', fontWeight: '800', background: BLUE, color: 'white', textAlign: 'left', letterSpacing: '0.4px' }}>Activity</th>
-              <th style={{ border: `1px solid ${BLUE}`, padding: '4px 8px', fontSize: '11px', fontWeight: '800', background: BLUE, color: 'white', textAlign: 'center', width: '80px' }}>Grade</th>
+              <th style={{border:`1px solid ${BLUE}`,padding:'4px 8px',fontSize:'11px',fontWeight:'800',background:BLUE,color:'white',textAlign:'left',letterSpacing:'0.4px'}}>Activity</th>
+              <th style={{border:`1px solid ${BLUE}`,padding:'4px 8px',fontSize:'11px',fontWeight:'800',background:BLUE,color:'white',textAlign:'center',width:'80px'}}>Grade</th>
             </tr>
           </thead>
           <tbody>
-            {[
-              ['Work Education (or Pre-vocational Education)', 'workEducation'],
-              ['Art Education', 'artEducation'],
-              ['Health & Physical Education', 'healthPhysical'],
-            ].map(([lbl, key], idx) => (
-              <tr key={key} style={{ background: idx % 2 === 0 ? '#f8faff' : '#fff' }}>
-                <td style={{ border: '1px solid #c7d2e8', padding: '4px 8px', fontSize: '11px', borderLeft: `3px solid #6d28d9` }}>
-                  <span style={{ color: '#374151', fontWeight: '600' }}>{lbl}</span>
-                </td>
-                <td style={{ border: '1px solid #c7d2e8', padding: '4px', textAlign: 'center', fontSize: '12px', fontWeight: '900', color: '#15803d', background: '#f0fdf4' }}>
-                  {coScholastic[key]?.[termKey] || 'A'}
-                </td>
+            {[['Work Education (or Pre-vocational Education)','workEducation'],['Art Education','artEducation'],['Health & Physical Education','healthPhysical']].map(([lbl,key],idx) => (
+              <tr key={key} style={{background:idx%2===0?'#f8faff':'#fff'}}>
+                <td style={{border:'1px solid #c7d2e8',padding:'4px 8px',fontSize:'11px',borderLeft:`3px solid #6d28d9`}}><span style={{color:'#374151',fontWeight:'600'}}>{lbl}</span></td>
+                <td style={{border:'1px solid #c7d2e8',padding:'4px',textAlign:'center',fontSize:'12px',fontWeight:'900',color:'#15803d',background:'#f0fdf4'}}>{coScholastic[key]?.[termKey]||'A'}</td>
               </tr>
             ))}
-            <tr style={{ background: '#f8faff' }}>
-              <td style={{ border: '1px solid #c7d2e8', padding: '4px 8px', fontSize: '11px', borderLeft: `3px solid #6d28d9` }}>
-                <span style={{ color: '#374151', fontWeight: '600' }}>Discipline</span>
-                <span style={{ fontWeight: '400', fontSize: '10px', color: '#9ca3af', marginLeft: '4px' }}>[on a 3 point (A-C) scale]</span>
+            <tr style={{background:'#f8faff'}}>
+              <td style={{border:'1px solid #c7d2e8',padding:'4px 8px',fontSize:'11px',borderLeft:`3px solid #6d28d9`}}>
+                <span style={{color:'#374151',fontWeight:'600'}}>Discipline</span>
+                <span style={{fontWeight:'400',fontSize:'10px',color:'#9ca3af',marginLeft:'4px'}}>[on a 3 point (A-C) scale]</span>
               </td>
-              <td style={{ border: '1px solid #c7d2e8', padding: '4px', textAlign: 'center', fontSize: '12px', fontWeight: '900', color: '#15803d', background: '#f0fdf4' }}>
-                {coScholastic.discipline?.[termKey] || 'A'}
-              </td>
+              <td style={{border:'1px solid #c7d2e8',padding:'4px',textAlign:'center',fontSize:'12px',fontWeight:'900',color:'#15803d',background:'#f0fdf4'}}>{coScholastic.discipline?.[termKey]||'A'}</td>
             </tr>
           </tbody>
         </table>
-
-        {/* ══ ATTENDANCE ══ */}
-        <div style={{ display: 'flex', gap: '6px', marginBottom: '5px' }}>
-          <div style={{
-            flex: 1, display: 'flex', alignItems: 'center', gap: '10px',
-            background: BLUE_LIGHT, border: `1.5px solid #93afd4`,
-            borderRadius: '4px', padding: '6px 12px',
-          }}>
-            <span style={{ fontSize: '11px', fontWeight: '800', color: BLUE, textTransform: 'uppercase', letterSpacing: '0.5px', flexShrink: 0 }}>Attendance</span>
-            <span style={{ fontSize: '10px', color: '#6b7280' }}>Present:</span>
-            <span style={{ fontSize: '14px', fontWeight: '900', color: BLUE, minWidth: '24px', textAlign: 'center' }}>{attendance.presentDays ?? '—'}</span>
-            <span style={{ fontSize: '10px', color: '#d1d5db' }}>|</span>
-            <span style={{ fontSize: '10px', color: '#6b7280' }}>Total Days:</span>
-            <span style={{ fontSize: '14px', fontWeight: '900', color: BLUE, minWidth: '24px', textAlign: 'center' }}>{attendance.totalWorkingDays ?? '—'}</span>
-            <span style={{ fontSize: '10px', color: '#d1d5db' }}>|</span>
-            <span style={{ fontSize: '10px', color: '#6b7280' }}>Percentage:</span>
-            <span style={{ fontSize: '14px', fontWeight: '900', minWidth: '40px', textAlign: 'center',
-              color: attendance.presentDays && attendance.totalWorkingDays
-                ? ((attendance.presentDays / attendance.totalWorkingDays) * 100) >= 75 ? '#15803d' : '#dc2626'
-                : BLUE }}>
-              {attendance.presentDays && attendance.totalWorkingDays
-                ? `${((attendance.presentDays / attendance.totalWorkingDays) * 100).toFixed(1)}%`
-                : '—'}
+        <div style={{display:'flex',gap:'6px',marginBottom:'5px'}}>
+          <div style={{flex:1,display:'flex',alignItems:'center',gap:'10px',background:BLUE_LIGHT,border:`1.5px solid #93afd4`,borderRadius:'4px',padding:'6px 12px'}}>
+            <span style={{fontSize:'11px',fontWeight:'800',color:BLUE,textTransform:'uppercase',letterSpacing:'0.5px',flexShrink:0}}>Attendance</span>
+            <span style={{fontSize:'10px',color:'#6b7280'}}>Present:</span>
+            <span style={{fontSize:'14px',fontWeight:'900',color:BLUE,minWidth:'24px',textAlign:'center'}}>{attendance.presentDays??'--'}</span>
+            <span style={{fontSize:'10px',color:'#d1d5db'}}>|</span>
+            <span style={{fontSize:'10px',color:'#6b7280'}}>Total Days:</span>
+            <span style={{fontSize:'14px',fontWeight:'900',color:BLUE,minWidth:'24px',textAlign:'center'}}>{attendance.totalWorkingDays??'--'}</span>
+            <span style={{fontSize:'10px',color:'#d1d5db'}}>|</span>
+            <span style={{fontSize:'10px',color:'#6b7280'}}>Percentage:</span>
+            <span style={{fontSize:'14px',fontWeight:'900',minWidth:'40px',textAlign:'center',color:attendance.presentDays&&attendance.totalWorkingDays?((attendance.presentDays/attendance.totalWorkingDays)*100)>=75?'#15803d':'#dc2626':BLUE}}>
+              {attendance.presentDays&&attendance.totalWorkingDays?`${((attendance.presentDays/attendance.totalWorkingDays)*100).toFixed(1)}%`:'--'}
             </span>
           </div>
         </div>
-
-        {/* ══ REMARK ══ */}
-        <div style={{
-          border: `1.5px solid #c7d2e8`, borderRadius: '4px', padding: '6px 12px',
-          marginBottom: '8px', background: '#fffbeb', borderLeft: `3px solid #f59e0b`,
-        }}>
-          <span style={{ fontSize: '11px', fontWeight: '800', color: '#b45309', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Class Teacher's Remark: </span>
-          <span style={{ fontSize: '11px', color: '#374151' }}>{remark}</span>
+        <div style={{border:`1.5px solid #c7d2e8`,borderRadius:'4px',padding:'6px 12px',marginBottom:'8px',background:'#fffbeb',borderLeft:`3px solid #f59e0b`}}>
+          <span style={{fontSize:'11px',fontWeight:'800',color:'#b45309',textTransform:'uppercase',letterSpacing:'0.5px'}}>Class Teacher&apos;s Remark: </span>
+          <span style={{fontSize:'11px',color:'#374151'}}>{remark}</span>
         </div>
-
-        {/* ══ RESULT ══ */}
-        <div style={{
-          background: pctNum >= 33 ? 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)' : '#fef2f2',
-          border: `1.5px solid ${pctNum >= 33 ? '#86efac' : '#fca5a5'}`,
-          borderRadius: '4px', padding: '6px 14px', marginBottom: '0',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        }}>
+        <div style={{background:pctNum>=33?'linear-gradient(135deg,#f0fdf4 0%,#dcfce7 100%)':'#fef2f2',border:`1.5px solid ${pctNum>=33?'#86efac':'#fca5a5'}`,borderRadius:'4px',padding:'6px 14px',marginBottom:'0',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
           <div>
-            <div style={{ fontSize: '12px', fontWeight: '800', color: pctNum >= 33 ? '#166534' : '#991b1b' }}>
-              {resultQualified}
-            </div>
-            <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '2px' }}>
-              Place: {schoolInfo.schoolAddress || '—'} &nbsp;|&nbsp; Date: {today}
-            </div>
+            <div style={{fontSize:'12px',fontWeight:'800',color:pctNum>=33?'#166534':'#991b1b'}}>{resultQualified}</div>
+            <div style={{fontSize:'11px',color:'#6b7280',marginTop:'2px'}}>Place: {schoolInfo.schoolAddress||'--'} &nbsp;|&nbsp; Date: {today}</div>
           </div>
-          <div style={{
-            fontSize: '17px', fontWeight: '900', letterSpacing: '2px',
-            color: pctNum >= 33 ? '#166534' : '#991b1b',
-            border: `2px solid ${pctNum >= 33 ? '#86efac' : '#fca5a5'}`,
-            padding: '4px 16px', borderRadius: '4px', background: 'white',
-          }}>
-            {pctNum >= 33 ? 'PASS' : 'FAIL'}
+          <div style={{fontSize:'17px',fontWeight:'900',letterSpacing:'2px',color:pctNum>=33?'#166534':'#991b1b',border:`2px solid ${pctNum>=33?'#86efac':'#fca5a5'}`,padding:'4px 16px',borderRadius:'4px',background:'white'}}>
+            {pctNum>=33?'PASS':'FAIL'}
           </div>
         </div>
-
-        {/* ══ ADAPTIVE SPACER — scales with subject count ══ */}
-        <div style={{ flex: '1 1 0px', minHeight: subCount > 8 ? '2mm' : '4mm', maxHeight: subCount > 8 ? '8mm' : '18mm' }} />
-
-        {/* ══ SIGNATURES + GRADING — pinned naturally, not forced to bottom ══ */}
+        <div style={{flex:'1 1 0px',minHeight:subCount>8?'2mm':'4mm',maxHeight:subCount>8?'8mm':'18mm'}} />
         <div>
-          {/* ══ SIGNATURES ══ */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-            {["Parent's Signature", "Class Teacher's Signature"].map(sig => (
-              <div key={sig} style={{ textAlign: 'center', flex: 1, padding: '0 8px' }}>
-                <div style={{ height: '44px', borderBottom: `1.5px solid #374151`, marginBottom: '4px' }} />
-                <div style={{ fontSize: '11px', color: '#374151', fontFamily: 'Arial, sans-serif', fontWeight: '600' }}>{sig}</div>
+          <div style={{display:'flex',justifyContent:'space-between',marginBottom:'10px'}}>
+            {["Parent's Signature","Class Teacher's Signature"].map(sig => (
+              <div key={sig} style={{textAlign:'center',flex:1,padding:'0 8px'}}>
+                <div style={{height:'44px',borderBottom:`1.5px solid #374151`,marginBottom:'4px'}} />
+                <div style={{fontSize:'11px',color:'#374151',fontFamily:'Arial,sans-serif',fontWeight:'600'}}>{sig}</div>
               </div>
             ))}
-            <div style={{ textAlign: 'center', flex: 1, padding: '0 8px' }}>
-              <div style={{
-                height: '44px', borderBottom: `1.5px solid #374151`, marginBottom: '4px',
-                display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
-              }}>
-                <img src={principalSign} alt="Principal Signature" style={{ maxHeight: '40px', maxWidth: '100%', objectFit: 'contain', marginBottom: '2px' }} />
+            <div style={{textAlign:'center',flex:1,padding:'0 8px'}}>
+              <div style={{height:'44px',borderBottom:`1.5px solid #374151`,marginBottom:'4px',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
+                <img src={principalSign} alt="Principal Signature" style={{maxHeight:'40px',maxWidth:'100%',objectFit:'contain',marginBottom:'2px'}} />
               </div>
-              <div style={{ fontSize: '11px', color: '#374151', fontFamily: 'Arial, sans-serif', fontWeight: '600' }}>Principal's Signature</div>
+              <div style={{fontSize:'11px',color:'#374151',fontFamily:'Arial,sans-serif',fontWeight:'600'}}>Principal&apos;s Signature</div>
             </div>
           </div>
-
-          {/* ══ GRADING SCALE — horizontal ══ */}
-          <div style={{ borderTop: `2px solid ${BLUE}`, paddingTop: '8px' }}>
-            <div style={{ fontSize: '11px', fontWeight: '800', marginBottom: '5px', color: BLUE, fontFamily: 'Arial, sans-serif', textTransform: 'uppercase', letterSpacing: '0.5px', textAlign: 'center' }}>
-              Grading Scale
-            </div>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
+          <div style={{borderTop:`2px solid ${BLUE}`,paddingTop:'8px'}}>
+            <div style={{fontSize:'11px',fontWeight:'800',marginBottom:'5px',color:BLUE,fontFamily:'Arial,sans-serif',textTransform:'uppercase',letterSpacing:'0.5px',textAlign:'center'}}>Grading Scale</div>
+            <table style={{width:'100%',borderCollapse:'collapse',fontSize:'11px'}}>
               <thead>
-                <tr>
-                  {[['91-100','A1'],['81-90','A2'],['71-80','B1'],['61-70','B2'],['51-60','C1'],['41-50','C2'],['33-40','D'],['32 & Below','E']].map(([r]) => (
-                    <th key={r} style={{ border: `1px solid ${BLUE}`, padding: '3px 4px', background: BLUE, color: 'white', fontWeight: '800', textAlign: 'center' }}>{r}</th>
-                  ))}
-                </tr>
+                <tr>{[['91-100','A1'],['81-90','A2'],['71-80','B1'],['61-70','B2'],['51-60','C1'],['41-50','C2'],['33-40','D'],['32 & Below','E']].map(([r])=>(<th key={r} style={{border:`1px solid ${BLUE}`,padding:'3px 4px',background:BLUE,color:'white',fontWeight:'800',textAlign:'center'}}>{r}</th>))}</tr>
               </thead>
               <tbody>
-                <tr>
-                  {[['91-100','A1'],['81-90','A2'],['71-80','B1'],['61-70','B2'],['51-60','C1'],['41-50','C2'],['33-40','D'],['32 & Below','E']].map(([, g]) => (
-                    <td key={g} style={{ border: '1px solid #c7d2e8', padding: '3px 4px', textAlign: 'center', fontWeight: '900', fontSize: '12px', color: gradeColor(g), background: gradeBg(g) }}>{g}</td>
-                  ))}
-                </tr>
+                <tr>{[['91-100','A1'],['81-90','A2'],['71-80','B1'],['61-70','B2'],['51-60','C1'],['41-50','C2'],['33-40','D'],['32 & Below','E']].map(([,g])=>(<td key={g} style={{border:'1px solid #c7d2e8',padding:'3px 4px',textAlign:'center',fontWeight:'900',fontSize:'12px',color:gradeColor(g),background:gradeBg(g)}}>{g}</td>))}</tr>
               </tbody>
             </table>
           </div>
         </div>
-
       </div>
     </div>
   );
 };
 
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   COMBINED MARKSHEET
-═══════════════════════════════════════════════════════════════════════════ */
 const CombinedMarksheet = ({ student, schoolInfo, academicYear }) => {
   const subjects = student.subjects || [];
-
   const enriched = subjects.map(s => {
     if (s.term1 && s.term2) return s;
-    const obtained = s.marksObtained ?? 0;
-    const maxM = s.maxMarks ?? 100;
-    return {
-      ...s,
-      term1: { periodicTest: null, noteBooks: null, subEnrichment: null, halfYearlyExam: null, total: 0, maxTotal: maxM, grade: '—' },
-      term2: { periodicTest: null, noteBooks: null, subEnrichment: null, yearlyExam: obtained, total: obtained, maxTotal: maxM, grade: s.grade || gradeFromPercent((obtained / maxM) * 100) },
-    };
+    const obtained = s.marksObtained ?? 0; const maxM = s.maxMarks ?? 100;
+    return { ...s, term1:{periodicTest:null,noteBooks:null,subEnrichment:null,halfYearlyExam:null,total:0,maxTotal:maxM,grade:'--'}, term2:{periodicTest:null,noteBooks:null,subEnrichment:null,yearlyExam:obtained,total:obtained,maxTotal:maxM,grade:s.grade||gradeFromPercent((obtained/maxM)*100)} };
   });
-
-  const grandT1  = enriched.reduce((a, s) => a + (typeof s.term1?.total === 'number' ? s.term1.total : 0), 0);
-  const grandT2  = enriched.reduce((a, s) => a + (typeof s.term2?.total === 'number' ? s.term2.total : 0), 0);
-  const grandMax = enriched.reduce((a, s) => a + (s.term1?.maxTotal || 0) + (s.term2?.maxTotal || 0), 0) || enriched.length * 200;
-  const grandTotal    = student.totalObtained ?? (grandT1 + grandT2);
-  const grandMaxFinal = student.totalMax ?? grandMax;
-  const percentage    = grandMaxFinal > 0 ? ((grandTotal / grandMaxFinal) * 100).toFixed(2) : '0.00';
+  const grandT1 = enriched.reduce((a,s)=>a+(typeof s.term1?.total==='number'?s.term1.total:0),0);
+  const grandT2 = enriched.reduce((a,s)=>a+(typeof s.term2?.total==='number'?s.term2.total:0),0);
+  const grandMax = enriched.reduce((a,s)=>a+(s.term1?.maxTotal||0)+(s.term2?.maxTotal||0),0)||enriched.length*200;
+  const grandTotal    = student.totalObtained??(grandT1+grandT2);
+  const grandMaxFinal = student.totalMax??grandMax;
+  const percentage    = grandMaxFinal>0?((grandTotal/grandMaxFinal)*100).toFixed(2):'0.00';
   const pctNum        = parseFloat(percentage);
   const overallGrade  = gradeFromPercent(pctNum);
-
   const coScholastic = student.coScholastic || {};
   const attendance   = student.attendance   || {};
   const remark = student.teacherRemark || 'Has done well.';
   const passed = pctNum >= PASS_MARK;
   const nextClass = getNextClass(student.class, passed);
-  const resultQualified = passed
-    ? `QUALIFIED FOR ADMISSION TO CLASS - ${nextClass}`
-    : `NOT PROMOTED — DETAINED IN CLASS - ${student.class || ''}`;
-
-  const apiBase  = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
-  const photoSrc = student.profileImage
-    ? (student.profileImage.startsWith('data:') ? student.profileImage : `${apiBase}${student.profileImage}`)
-    : null;
-
-  const BLUE = '#1a3a6b';
-  const BLUE_LIGHT = '#e8edf7';
+  const resultQualified = passed?`QUALIFIED FOR ADMISSION TO CLASS - ${nextClass}`:`NOT PROMOTED -- DETAINED IN CLASS - ${student.class||''}`;
+  const apiBase  = import.meta.env.VITE_API_URL?.replace('/api','') || 'http://localhost:5000';
+  const photoSrc = student.profileImage?(student.profileImage.startsWith('data:')?student.profileImage:`${apiBase}${student.profileImage}`):null;
+  const BLUE = '#1a3a6b'; const BLUE_LIGHT = '#e8edf7';
   const subCount = enriched.length;
   const fs = (b) => scaledFont(b, subCount);
   const rowPad = subCount > 8 ? '2px 4px' : '3px 4px';
-
-  const TH = ({ children, colSpan, rowSpan, style = {} }) => (
-    <th colSpan={colSpan} rowSpan={rowSpan} style={{
-      border: `1px solid ${BLUE}`, padding: rowPad, fontSize: `${fs(10)}px`,
-      fontWeight: '800', textAlign: 'center', background: BLUE, color: 'white',
-      whiteSpace: 'pre-line', verticalAlign: 'middle', letterSpacing: '0.3px', ...style,
-    }}>{children}</th>
+  const TH = ({ children, colSpan, rowSpan, style={} }) => (
+    <th colSpan={colSpan} rowSpan={rowSpan} style={{border:`1px solid ${BLUE}`,padding:rowPad,fontSize:`${fs(10)}px`,fontWeight:'800',textAlign:'center',background:BLUE,color:'white',whiteSpace:'pre-line',verticalAlign:'middle',letterSpacing:'0.3px',...style}}>{children}</th>
   );
-
-  const TD = ({ children, style = {} }) => (
-    <td style={{
-      border: '1px solid #c7d2e8', padding: rowPad, fontSize: `${fs(11.5)}px`,
-      textAlign: 'center', verticalAlign: 'middle', ...style,
-    }}>
-      {children === null || children === undefined ? <span style={{ color: '#d1d5db' }}>—</span> : children}
+  const TD = ({ children, style={} }) => (
+    <td style={{border:'1px solid #c7d2e8',padding:rowPad,fontSize:`${fs(11.5)}px`,textAlign:'center',verticalAlign:'middle',...style}}>
+      {children===null||children===undefined?<span style={{color:'#d1d5db'}}>--</span>:children}
     </td>
   );
-
   return (
-    <div className="marksheet-page bg-white" style={{
-      width: '210mm', height: '297mm', margin: '0 auto', padding: '6mm 8mm',
-      fontFamily: '"Times New Roman", Times, serif', fontSize: '15.5px',
-      boxSizing: 'border-box', pageBreakAfter: 'always', position: 'relative',
-      display: 'flex', flexDirection: 'column', overflow: 'hidden',
-    }}>
-      <div style={{ position: 'absolute', inset: '3.5mm', border: `3px solid ${BLUE}`, pointerEvents: 'none', zIndex: 0, borderRadius: '3px' }} />
-      <div style={{ position: 'absolute', inset: '5.5mm', border: `1px solid #93afd4`, pointerEvents: 'none', zIndex: 0, borderRadius: '2px' }} />
-
-      {schoolInfo.schoolLogo && (
-        <img src={schoolInfo.schoolLogo} alt="" style={{ position: 'absolute', top: '50%', left: '50%',
-          transform: 'translate(-50%,-50%)', width: '190px', opacity: 0.05, pointerEvents: 'none', zIndex: 0 }} />
-      )}
-
-      <div style={{ position: 'relative', zIndex: 1, flex: 1, display: 'flex', flexDirection: 'column' }}>
-
-        {/* HEADER */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '7px', paddingBottom: '7px', borderBottom: `3px double ${BLUE}` }}>
-          {/* Left logo */}
-          <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            width: '78px', height: '78px', borderRadius: '50%',
-            background: `radial-gradient(circle, #e8edf7 60%, #c7d2e8 100%)`,
-            border: `3px solid ${BLUE}`, boxShadow: '0 2px 8px rgba(26,58,107,0.25)', padding: '4px',
-          }}>
-            <img src={schoolInfo.schoolLogo || schoolLogo} alt="logo"
-              style={{ width: '66px', height: '66px', objectFit: 'contain', borderRadius: '50%' }} />
+    <div className="marksheet-page bg-white" style={{width:'210mm',height:'297mm',margin:'0 auto',padding:'6mm 8mm',fontFamily:'"Times New Roman",Times,serif',fontSize:'15.5px',boxSizing:'border-box',pageBreakAfter:'always',position:'relative',display:'flex',flexDirection:'column',overflow:'hidden'}}>
+      <div style={{position:'absolute',inset:'3.5mm',border:`3px solid ${BLUE}`,pointerEvents:'none',zIndex:0,borderRadius:'3px'}} />
+      <div style={{position:'absolute',inset:'5.5mm',border:`1px solid #93afd4`,pointerEvents:'none',zIndex:0,borderRadius:'2px'}} />
+      {schoolInfo.schoolLogo && <img src={schoolInfo.schoolLogo} alt="" style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',width:'190px',opacity:0.05,pointerEvents:'none',zIndex:0}} />}
+      <div style={{position:'relative',zIndex:1,flex:1,display:'flex',flexDirection:'column'}}>
+        <div style={{display:'flex',alignItems:'center',gap:'12px',marginBottom:'7px',paddingBottom:'7px',borderBottom:`3px double ${BLUE}`}}>
+          <div style={{flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',width:'78px',height:'78px',borderRadius:'50%',background:`radial-gradient(circle,#e8edf7 60%,#c7d2e8 100%)`,border:`3px solid ${BLUE}`,boxShadow:'0 2px 8px rgba(26,58,107,0.25)',padding:'4px'}}>
+            <img src={schoolInfo.schoolLogo||schoolLogo} alt="logo" style={{width:'66px',height:'66px',objectFit:'contain',borderRadius:'50%'}} />
           </div>
-
-          {/* Center */}
-          <div style={{ flex: 1, textAlign: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '3px' }}>
-              <div style={{ flex: 1, height: '1.5px', background: `linear-gradient(to right, transparent, ${BLUE})` }} />
-              <div style={{
-                fontSize: '28px', fontWeight: '900', color: BLUE,
-                fontFamily: 'Georgia, "Times New Roman", serif',
-                letterSpacing: '1px', lineHeight: 1.15,
-                textShadow: '0 1px 2px rgba(26,58,107,0.15)',
-              }}>
-                {schoolInfo.schoolName}
-              </div>
-              <div style={{ flex: 1, height: '1.5px', background: `linear-gradient(to left, transparent, ${BLUE})` }} />
+          <div style={{flex:1,textAlign:'center'}}>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'8px',marginBottom:'3px'}}>
+              <div style={{flex:1,height:'1.5px',background:`linear-gradient(to right,transparent,${BLUE})`}} />
+              <div style={{fontSize:'28px',fontWeight:'900',color:BLUE,fontFamily:'Georgia,"Times New Roman",serif',letterSpacing:'1px',lineHeight:1.15,textShadow:'0 1px 2px rgba(26,58,107,0.15)'}}>{schoolInfo.schoolName}</div>
+              <div style={{flex:1,height:'1.5px',background:`linear-gradient(to left,transparent,${BLUE})`}} />
             </div>
-
-            <div style={{
-              fontSize: '14px', color: '#1e4d8c', fontFamily: 'Georgia, serif',
-              fontStyle: 'italic', letterSpacing: '0.5px', marginBottom: '3px',
-            }}>
-              ❝ {schoolInfo.schoolSlogan || 'Affiliated to Central Board of Secondary Education'} ❞
-            </div>
-
+            <div style={{fontSize:'14px',color:'#1e4d8c',fontFamily:'Georgia,serif',fontStyle:'italic',letterSpacing:'0.5px',marginBottom:'3px'}}>{schoolInfo.schoolSlogan||'Affiliated to Central Board of Secondary Education'}</div>
             {schoolInfo.affiliationNumber && (
-              <div style={{
-                display: 'inline-flex', gap: '12px', fontSize: '12.5px', color: '#374151',
-                background: '#e8edf7', borderRadius: '20px', padding: '2px 14px',
-                border: `1px solid #c7d2e8`, marginBottom: '3px',
-              }}>
-                <span>Affil. No.: <b style={{ color: BLUE }}>{schoolInfo.affiliationNumber}</b></span>
-                {schoolInfo.schoolCode && <span>|&nbsp; School Code: <b style={{ color: BLUE }}>{schoolInfo.schoolCode}</b></span>}
+              <div style={{display:'inline-flex',gap:'12px',fontSize:'12.5px',color:'#374151',background:'#e8edf7',borderRadius:'20px',padding:'2px 14px',border:`1px solid #c7d2e8`,marginBottom:'3px'}}>
+                <span>Affil. No.: <b style={{color:BLUE}}>{schoolInfo.affiliationNumber}</b></span>
+                {schoolInfo.schoolCode && <span>|&nbsp;School Code: <b style={{color:BLUE}}>{schoolInfo.schoolCode}</b></span>}
               </div>
             )}
-
-            <div style={{ fontSize: '13.5px', color: '#4b5563', fontFamily: 'Arial, sans-serif', letterSpacing: '0.3px' }}>
-              📍 {schoolInfo.schoolAddress}
-            </div>
+            <div style={{fontSize:'13.5px',color:'#4b5563',fontFamily:'Arial,sans-serif',letterSpacing:'0.3px'}}>{schoolInfo.schoolAddress}</div>
           </div>
-
-          {/* Right logo */}
-          <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            width: '78px', height: '78px', borderRadius: '50%',
-            background: `radial-gradient(circle, #e8edf7 60%, #c7d2e8 100%)`,
-            border: `3px solid ${BLUE}`, boxShadow: '0 2px 8px rgba(26,58,107,0.25)', padding: '4px',
-          }}>
-            <img src={schoolInfo.schoolLogo || schoolLogo} alt="logo2"
-              style={{ width: '66px', height: '66px', objectFit: 'contain', borderRadius: '50%' }} />
+          <div style={{flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',width:'78px',height:'78px',borderRadius:'50%',background:`radial-gradient(circle,#e8edf7 60%,#c7d2e8 100%)`,border:`3px solid ${BLUE}`,boxShadow:'0 2px 8px rgba(26,58,107,0.25)',padding:'4px'}}>
+            <img src={schoolInfo.schoolLogo||schoolLogo} alt="logo2" style={{width:'66px',height:'66px',objectFit:'contain',borderRadius:'50%'}} />
           </div>
         </div>
-
-        {/* TITLE */}
-        <div style={{
-          background: `linear-gradient(135deg, ${BLUE} 0%, #1e4d8c 100%)`,
-          color: 'white', textAlign: 'center', padding: '5px 12px',
-          fontSize: '18px', fontWeight: '900', letterSpacing: '3px',
-          marginBottom: '8px', fontFamily: 'Arial, sans-serif',
-          borderRadius: '3px', boxShadow: '0 2px 6px rgba(26,58,107,0.3)',
-        }}>
-          ANNUAL RESULT — SESSION {academicYear}
+        <div style={{background:`linear-gradient(135deg,${BLUE} 0%,#1e4d8c 100%)`,color:'white',textAlign:'center',padding:'5px 12px',fontSize:'18px',fontWeight:'900',letterSpacing:'3px',marginBottom:'8px',fontFamily:'Arial,sans-serif',borderRadius:'3px',boxShadow:'0 2px 6px rgba(26,58,107,0.3)'}}>
+          ANNUAL RESULT -- SESSION {academicYear}
         </div>
-
-        {/* STUDENT INFO */}
-        <div style={{ display: 'flex', marginBottom: '8px', border: `1.5px solid ${BLUE}`, borderRadius: '4px', overflow: 'hidden' }}>
-          <div style={{ flex: 1, padding: '7px 10px', background: BLUE_LIGHT }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <div style={{display:'flex',marginBottom:'8px',border:`1.5px solid ${BLUE}`,borderRadius:'4px',overflow:'hidden'}}>
+          <div style={{flex:1,padding:'7px 10px',background:BLUE_LIGHT}}>
+            <table style={{width:'100%',borderCollapse:'collapse'}}>
               <tbody>
                 <tr>
-                  <td style={{ fontSize: '14.5px', paddingBottom: '3px', width: '52%' }}>
-                    <span style={{ color: '#6b7280', fontSize: '13.5px', fontWeight: '700', textTransform: 'uppercase' }}>Admission No.</span><br />
-                    <b style={{ fontSize: '15.5px', color: '#111827' }}>{student.admissionNo || student.UID || '—'}</b>
+                  <td style={{fontSize:'14.5px',paddingBottom:'3px',width:'52%'}}>
+                    <span style={{color:'#6b7280',fontSize:'13.5px',fontWeight:'700',textTransform:'uppercase'}}>Admission No.</span><br/>
+                    <b style={{fontSize:'15.5px',color:'#111827'}}>{student.admissionNo||student.UID||'--'}</b>
                   </td>
-                  <td style={{ fontSize: '14.5px', paddingBottom: '3px' }}>
-                    <span style={{ color: '#6b7280', fontSize: '13.5px', fontWeight: '700', textTransform: 'uppercase' }}>Class &amp; Sec.</span><br />
-                    <b style={{ fontSize: '15.5px', color: '#111827' }}>{student.class || '—'}</b>
-                  </td>
-                </tr>
-                <tr>
-                  <td colSpan={2} style={{ fontSize: '14.5px', paddingBottom: '3px' }}>
-                    <span style={{ color: '#6b7280', fontSize: '13.5px', fontWeight: '700', textTransform: 'uppercase' }}>Student Name</span><br />
-                    <b style={{ fontSize: '17px', color: BLUE }}>{student.name}</b>
+                  <td style={{fontSize:'14.5px',paddingBottom:'3px'}}>
+                    <span style={{color:'#6b7280',fontSize:'13.5px',fontWeight:'700',textTransform:'uppercase'}}>Class &amp; Sec.</span><br/>
+                    <b style={{fontSize:'15.5px',color:'#111827'}}>{student.class||'--'}</b>
                   </td>
                 </tr>
                 <tr>
-                  <td style={{ fontSize: '14.5px', paddingBottom: '2px' }}>
-                    <span style={{ color: '#6b7280', fontSize: '13.5px' }}>Mother's Name: </span>
-                    <span>{student.motherName || '—'}</span>
-                  </td>
-                  <td style={{ fontSize: '14.5px' }}>
-                    <span style={{ color: '#6b7280', fontSize: '13.5px' }}>Father's Name: </span>
-                    <span>{student.fatherName || '—'}</span>
+                  <td colSpan={2} style={{fontSize:'14.5px',paddingBottom:'3px'}}>
+                    <span style={{color:'#6b7280',fontSize:'13.5px',fontWeight:'700',textTransform:'uppercase'}}>Student Name</span><br/>
+                    <b style={{fontSize:'17px',color:BLUE}}>{student.name}</b>
                   </td>
                 </tr>
                 <tr>
-                  <td colSpan={2} style={{ fontSize: '14px' }}>
-                    <span style={{ color: '#6b7280', fontSize: '13.5px' }}>DOB: </span>
-                    <span>{student.dob ? fmt(student.dob) : '—'}</span>
+                  <td style={{fontSize:'14.5px',paddingBottom:'2px'}}><span style={{color:'#6b7280',fontSize:'13.5px'}}>Mother&apos;s Name: </span><span>{student.motherName||'--'}</span></td>
+                  <td style={{fontSize:'14.5px'}}><span style={{color:'#6b7280',fontSize:'13.5px'}}>Father&apos;s Name: </span><span>{student.fatherName||'--'}</span></td>
+                </tr>
+                <tr>
+                  <td colSpan={2} style={{fontSize:'14px'}}>
+                    <span style={{color:'#6b7280',fontSize:'13.5px'}}>DOB: </span><span>{student.dob?fmt(student.dob):'--'}</span>
                     &nbsp;&nbsp;&nbsp;
-                    <span style={{ color: '#6b7280', fontSize: '13.5px' }}>Address: </span>
-                    <span>{student.address || '—'}</span>
+                    <span style={{color:'#6b7280',fontSize:'13.5px'}}>Address: </span><span>{student.address||'--'}</span>
                   </td>
                 </tr>
               </tbody>
             </table>
           </div>
-          <div style={{ width: '72px', flexShrink: 0, borderLeft: `1.5px solid ${BLUE}`,
-            display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f0f4fb', padding: '6px' }}>
-            <div style={{ width: '56px', height: '68px', border: `2px solid ${BLUE}`,
-              borderRadius: '3px', overflow: 'hidden',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              background: '#e5e7eb', boxShadow: '0 2px 6px rgba(0,0,0,0.15)' }}>
-              {photoSrc
-                ? <img src={photoSrc} alt={student.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                : <User size={22} color="#9ca3af" />}
+          <div style={{width:'72px',flexShrink:0,borderLeft:`1.5px solid ${BLUE}`,display:'flex',alignItems:'center',justifyContent:'center',background:'#f0f4fb',padding:'6px'}}>
+            <div style={{width:'56px',height:'68px',border:`2px solid ${BLUE}`,borderRadius:'3px',overflow:'hidden',display:'flex',alignItems:'center',justifyContent:'center',background:'#e5e7eb',boxShadow:'0 2px 6px rgba(0,0,0,0.15)'}}>
+              {photoSrc?<img src={photoSrc} alt={student.name} style={{width:'100%',height:'100%',objectFit:'cover'}} />:<User size={22} color="#9ca3af" />}
             </div>
           </div>
         </div>
-
-        {/* SCHOLASTIC HEADING */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-          <div style={{ flex: 1, height: '1px', background: '#c7d2e8' }} />
-          <div style={{ fontWeight: '900', fontSize: '16px', fontFamily: 'Arial, sans-serif', color: BLUE, padding: '0 10px', letterSpacing: '0.5px' }}>
-            ✦ Scholastic Area ✦
-          </div>
-          <div style={{ flex: 1, height: '1px', background: '#c7d2e8' }} />
+        <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'4px'}}>
+          <div style={{flex:1,height:'1px',background:'#c7d2e8'}} />
+          <div style={{fontWeight:'900',fontSize:'16px',fontFamily:'Arial,sans-serif',color:BLUE,padding:'0 10px',letterSpacing:'0.5px'}}>Scholastic Area</div>
+          <div style={{flex:1,height:'1px',background:'#c7d2e8'}} />
         </div>
-
-        {/* COMBINED MARKS TABLE */}
-        <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '8px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
+        <table style={{width:'100%',borderCollapse:'collapse',marginBottom:'8px',boxShadow:'0 1px 4px rgba(0,0,0,0.08)'}}>
           <thead>
             <tr>
-              <TH rowSpan={2} style={{ width: '95px', fontSize: `${fs(11)}px` }}>SUBJECTS</TH>
-              <TH colSpan={6} style={{ background: '#1e3575', fontSize: `${fs(11)}px` }}>TERM - 1</TH>
-              <TH colSpan={6} style={{ background: '#7c2d12', fontSize: `${fs(11)}px` }}>TERM - 2</TH>
+              <TH rowSpan={2} style={{width:'95px',fontSize:`${fs(11)}px`}}>SUBJECTS</TH>
+              <TH colSpan={6} style={{background:'#1e3575',fontSize:`${fs(11)}px`}}>TERM - 1</TH>
+              <TH colSpan={6} style={{background:'#7c2d12',fontSize:`${fs(11)}px`}}>TERM - 2</TH>
             </tr>
             <tr>
-              <TH style={{ background: '#243d8a' }}>PT{'\n'}(10)</TH>
-              <TH style={{ background: '#243d8a' }}>NB{'\n'}(5)</TH>
-              <TH style={{ background: '#243d8a' }}>SE{'\n'}(5)</TH>
-              <TH style={{ background: '#243d8a' }}>HY{'\n'}(80)</TH>
-              <TH style={{ background: '#1a326e' }}>Total{'\n'}(100)</TH>
-              <TH style={{ background: '#1a326e' }}>Grade</TH>
-              <TH style={{ background: '#92400e' }}>PT{'\n'}(10)</TH>
-              <TH style={{ background: '#92400e' }}>NB{'\n'}(5)</TH>
-              <TH style={{ background: '#92400e' }}>SE{'\n'}(5)</TH>
-              <TH style={{ background: '#92400e' }}>FE{'\n'}(80)</TH>
-              <TH style={{ background: '#78350f' }}>Total{'\n'}(100)</TH>
-              <TH style={{ background: '#78350f' }}>Grade</TH>
+              <TH style={{background:'#243d8a'}}>{'PT\n(10)'}</TH>
+              <TH style={{background:'#243d8a'}}>{'NB\n(5)'}</TH>
+              <TH style={{background:'#243d8a'}}>{'SE\n(5)'}</TH>
+              <TH style={{background:'#243d8a'}}>{'HY\n(80)'}</TH>
+              <TH style={{background:'#1a326e'}}>{'Total\n(100)'}</TH>
+              <TH style={{background:'#1a326e'}}>Grade</TH>
+              <TH style={{background:'#92400e'}}>{'PT\n(10)'}</TH>
+              <TH style={{background:'#92400e'}}>{'NB\n(5)'}</TH>
+              <TH style={{background:'#92400e'}}>{'SE\n(5)'}</TH>
+              <TH style={{background:'#92400e'}}>{'FE\n(80)'}</TH>
+              <TH style={{background:'#78350f'}}>{'Total\n(100)'}</TH>
+              <TH style={{background:'#78350f'}}>Grade</TH>
             </tr>
           </thead>
           <tbody>
-            {enriched.map((sub, i) => (
-              <tr key={i} style={{ background: i % 2 === 0 ? '#f8faff' : '#ffffff' }}>
-                <td style={{
-                  border: '1px solid #c7d2e8', padding: rowPad, fontSize: `${fs(11.5)}px`,
-                  fontWeight: '700', borderLeft: `3px solid ${BLUE}`,
-                }}>
-                  {sub.subjectName}
-                </td>
+            {enriched.map((sub,i) => (
+              <tr key={i} style={{background:i%2===0?'#f8faff':'#ffffff'}}>
+                <td style={{border:'1px solid #c7d2e8',padding:rowPad,fontSize:`${fs(11.5)}px`,fontWeight:'700',borderLeft:`3px solid ${BLUE}`}}>{sub.subjectName}</td>
                 <TD>{sub.term1?.periodicTest}</TD>
                 <TD>{sub.term1?.noteBooks}</TD>
                 <TD>{sub.term1?.subEnrichment}</TD>
                 <TD>{sub.term1?.halfYearlyExam}</TD>
-                <TD style={{ fontWeight: '800', background: '#f0f4ff' }}>
-                  {typeof sub.term1?.total === 'number' && sub.term1.total > 0 ? sub.term1.total : null}
-                </TD>
-                <TD style={{ fontWeight: '900', color: gradeColor(sub.term1?.grade), background: gradeBg(sub.term1?.grade) }}>
-                  {sub.term1?.grade}
-                </TD>
+                <TD style={{fontWeight:'800',background:'#f0f4ff'}}>{typeof sub.term1?.total==='number'&&sub.term1.total>0?sub.term1.total:null}</TD>
+                <TD style={{fontWeight:'900',color:gradeColor(sub.term1?.grade),background:gradeBg(sub.term1?.grade)}}>{sub.term1?.grade}</TD>
                 <TD>{sub.term2?.periodicTest}</TD>
                 <TD>{sub.term2?.noteBooks}</TD>
                 <TD>{sub.term2?.subEnrichment}</TD>
                 <TD>{sub.term2?.yearlyExam}</TD>
-                <TD style={{ fontWeight: '800', background: '#fff7ed' }}>
-                  {typeof sub.term2?.total === 'number' && sub.term2.total > 0 ? sub.term2.total : null}
-                </TD>
-                <TD style={{ fontWeight: '900', color: gradeColor(sub.term2?.grade), background: gradeBg(sub.term2?.grade) }}>
-                  {sub.term2?.grade}
-                </TD>
+                <TD style={{fontWeight:'800',background:'#fff7ed'}}>{typeof sub.term2?.total==='number'&&sub.term2.total>0?sub.term2.total:null}</TD>
+                <TD style={{fontWeight:'900',color:gradeColor(sub.term2?.grade),background:gradeBg(sub.term2?.grade)}}>{sub.term2?.grade}</TD>
               </tr>
             ))}
           </tbody>
           <tfoot>
-            <tr style={{ background: '#e8edf7' }}>
-              <td style={{ border: `1px solid ${BLUE}`, padding: rowPad, fontWeight: '900', fontSize: `${fs(13)}px`, textAlign: 'center', color: BLUE }}>Grand Total</td>
-              <td colSpan={4} style={{ border: `1px solid ${BLUE}` }} />
-              <td style={{ border: `1px solid ${BLUE}`, padding: rowPad, fontWeight: '900', fontSize: `${fs(14)}px`, textAlign: 'center', color: '#1e3575' }}>
-                {grandT1 > 0 ? grandT1 : '—'}
-              </td>
-              <td style={{ border: `1px solid ${BLUE}` }} />
-              <td colSpan={4} style={{ border: `1px solid ${BLUE}` }} />
-              <td style={{ border: `1px solid ${BLUE}`, padding: rowPad, fontWeight: '900', fontSize: `${fs(14)}px`, textAlign: 'center', color: '#78350f' }}>
-                {grandT2 > 0 ? grandT2 : '—'}
-              </td>
-              <td style={{ border: `1px solid ${BLUE}` }} />
+            <tr style={{background:'#e8edf7'}}>
+              <td style={{border:`1px solid ${BLUE}`,padding:rowPad,fontWeight:'900',fontSize:`${fs(13)}px`,textAlign:'center',color:BLUE}}>Grand Total</td>
+              <td colSpan={4} style={{border:`1px solid ${BLUE}`}} />
+              <td style={{border:`1px solid ${BLUE}`,padding:rowPad,fontWeight:'900',fontSize:`${fs(14)}px`,textAlign:'center',color:'#1e3575'}}>{grandT1>0?grandT1:'--'}</td>
+              <td style={{border:`1px solid ${BLUE}`}} />
+              <td colSpan={4} style={{border:`1px solid ${BLUE}`}} />
+              <td style={{border:`1px solid ${BLUE}`,padding:rowPad,fontWeight:'900',fontSize:`${fs(14)}px`,textAlign:'center',color:'#78350f'}}>{grandT2>0?grandT2:'--'}</td>
+              <td style={{border:`1px solid ${BLUE}`}} />
             </tr>
-            <tr style={{ background: BLUE }}>
-              <td colSpan={5} style={{ border: `1px solid ${BLUE}`, padding: rowPad, fontWeight: '900', fontSize: `${fs(13)}px`, textAlign: 'right', color: 'white' }}>
-                Combined Total
-              </td>
-              <td colSpan={2} style={{ border: `1px solid ${BLUE}`, padding: rowPad, fontWeight: '900', fontSize: `${fs(14)}px`, textAlign: 'center', color: '#fcd34d' }}>
-                {grandTotal}/{grandMaxFinal}
-              </td>
-              <td colSpan={4} style={{ border: `1px solid ${BLUE}`, padding: rowPad, fontWeight: '900', fontSize: `${fs(13)}px`, textAlign: 'right', color: 'white' }}>
-                Percentage &amp; Grade
-              </td>
-              <td colSpan={2} style={{ border: `1px solid ${BLUE}`, padding: rowPad, fontWeight: '900', fontSize: `${fs(14)}px`, textAlign: 'center', color: '#fcd34d' }}>
-                {percentage}% &nbsp; {overallGrade}
-              </td>
+            <tr style={{background:BLUE}}>
+              <td colSpan={5} style={{border:`1px solid ${BLUE}`,padding:rowPad,fontWeight:'900',fontSize:`${fs(13)}px`,textAlign:'right',color:'white'}}>Combined Total</td>
+              <td colSpan={2} style={{border:`1px solid ${BLUE}`,padding:rowPad,fontWeight:'900',fontSize:`${fs(14)}px`,textAlign:'center',color:'#fcd34d'}}>{grandTotal}/{grandMaxFinal}</td>
+              <td colSpan={4} style={{border:`1px solid ${BLUE}`,padding:rowPad,fontWeight:'900',fontSize:`${fs(13)}px`,textAlign:'right',color:'white'}}>Percentage &amp; Grade</td>
+              <td colSpan={2} style={{border:`1px solid ${BLUE}`,padding:rowPad,fontWeight:'900',fontSize:`${fs(14)}px`,textAlign:'center',color:'#fcd34d'}}>{percentage}% &nbsp; {overallGrade}</td>
             </tr>
           </tfoot>
         </table>
-
-        {/* CO-SCHOLASTIC */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-          <div style={{ flex: 1, height: '1px', background: '#c7d2e8' }} />
-          <div style={{ fontWeight: '900', fontSize: '15.5px', fontFamily: 'Arial, sans-serif', color: BLUE, padding: '0 10px', letterSpacing: '0.5px' }}>
-            ✦ Co-Scholastic Area <span style={{ fontWeight: '400', fontSize: '14px', color: '#6b7280' }}></span> ✦
-          </div>
-          <div style={{ flex: 1, height: '1px', background: '#c7d2e8' }} />
+        <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'4px'}}>
+          <div style={{flex:1,height:'1px',background:'#c7d2e8'}} />
+          <div style={{fontWeight:'900',fontSize:'15.5px',fontFamily:'Arial,sans-serif',color:BLUE,padding:'0 10px',letterSpacing:'0.5px'}}>Co-Scholastic Area</div>
+          <div style={{flex:1,height:'1px',background:'#c7d2e8'}} />
         </div>
-
-        <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '5px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+        <table style={{width:'100%',borderCollapse:'collapse',marginBottom:'5px',boxShadow:'0 1px 3px rgba(0,0,0,0.06)'}}>
           <thead>
             <tr>
-              <th style={{ border: `1px solid ${BLUE}`, padding: '3px 7px', fontSize: '14.5px', fontWeight: '800', background: BLUE, color: 'white', textAlign: 'left' }}>Activity</th>
-              <th style={{ border: `1px solid ${BLUE}`, padding: '3px 7px', fontSize: '14.5px', fontWeight: '800', background: '#1e3575', color: 'white', textAlign: 'center', width: '55px' }}>Term-1</th>
-              <th style={{ border: `1px solid ${BLUE}`, padding: '3px 7px', fontSize: '14.5px', fontWeight: '800', background: '#78350f', color: 'white', textAlign: 'center', width: '55px' }}>Term-2</th>
+              <th style={{border:`1px solid ${BLUE}`,padding:'3px 7px',fontSize:'14.5px',fontWeight:'800',background:BLUE,color:'white',textAlign:'left'}}>Activity</th>
+              <th style={{border:`1px solid ${BLUE}`,padding:'3px 7px',fontSize:'14.5px',fontWeight:'800',background:'#1e3575',color:'white',textAlign:'center',width:'55px'}}>Term-1</th>
+              <th style={{border:`1px solid ${BLUE}`,padding:'3px 7px',fontSize:'14.5px',fontWeight:'800',background:'#78350f',color:'white',textAlign:'center',width:'55px'}}>Term-2</th>
             </tr>
           </thead>
           <tbody>
-            {[['Work Education', 'workEducation'], ['Art Education', 'artEducation'], ['Health & Physical Education', 'healthPhysical']].map(([lbl, key], idx) => (
-              <tr key={key} style={{ background: idx % 2 === 0 ? '#f8faff' : '#fff' }}>
-                <td style={{ border: '1px solid #c7d2e8', padding: '3px 7px', fontSize: '14.5px', borderLeft: `3px solid #6d28d9` }}>{lbl}</td>
-                <td style={{ border: '1px solid #c7d2e8', padding: '2px', textAlign: 'center', fontSize: '15.5px', fontWeight: '900', color: '#15803d', background: '#f0fdf4' }}>{coScholastic[key]?.term1 || 'A'}</td>
-                <td style={{ border: '1px solid #c7d2e8', padding: '2px', textAlign: 'center', fontSize: '15.5px', fontWeight: '900', color: '#15803d', background: '#f0fdf4' }}>{coScholastic[key]?.term2 || 'A'}</td>
+            {[['Work Education','workEducation'],['Art Education','artEducation'],['Health & Physical Education','healthPhysical']].map(([lbl,key],idx) => (
+              <tr key={key} style={{background:idx%2===0?'#f8faff':'#fff'}}>
+                <td style={{border:'1px solid #c7d2e8',padding:'3px 7px',fontSize:'14.5px',borderLeft:`3px solid #6d28d9`}}>{lbl}</td>
+                <td style={{border:'1px solid #c7d2e8',padding:'2px',textAlign:'center',fontSize:'15.5px',fontWeight:'900',color:'#15803d',background:'#f0fdf4'}}>{coScholastic[key]?.term1||'A'}</td>
+                <td style={{border:'1px solid #c7d2e8',padding:'2px',textAlign:'center',fontSize:'15.5px',fontWeight:'900',color:'#15803d',background:'#f0fdf4'}}>{coScholastic[key]?.term2||'A'}</td>
               </tr>
             ))}
-            <tr style={{ background: '#f8faff' }}>
-              <td style={{ border: '1px solid #c7d2e8', padding: '3px 7px', fontSize: '14.5px', borderLeft: `3px solid #6d28d9` }}>Discipline</td>
-              <td style={{ border: '1px solid #c7d2e8', padding: '2px', textAlign: 'center', fontSize: '15.5px', fontWeight: '900', color: '#15803d', background: '#f0fdf4' }}>{coScholastic.discipline?.term1 || 'A'}</td>
-              <td style={{ border: '1px solid #c7d2e8', padding: '2px', textAlign: 'center', fontSize: '15.5px', fontWeight: '900', color: '#15803d', background: '#f0fdf4' }}>{coScholastic.discipline?.term2 || 'A'}</td>
+            <tr style={{background:'#f8faff'}}>
+              <td style={{border:'1px solid #c7d2e8',padding:'3px 7px',fontSize:'14.5px',borderLeft:`3px solid #6d28d9`}}>Discipline</td>
+              <td style={{border:'1px solid #c7d2e8',padding:'2px',textAlign:'center',fontSize:'15.5px',fontWeight:'900',color:'#15803d',background:'#f0fdf4'}}>{coScholastic.discipline?.term1||'A'}</td>
+              <td style={{border:'1px solid #c7d2e8',padding:'2px',textAlign:'center',fontSize:'15.5px',fontWeight:'900',color:'#15803d',background:'#f0fdf4'}}>{coScholastic.discipline?.term2||'A'}</td>
             </tr>
           </tbody>
         </table>
-
-        {/* ATTENDANCE + REMARK */}
-        <div style={{ display: 'flex', gap: '6px', marginBottom: '4px' }}>
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '10px', background: BLUE_LIGHT, border: `1.5px solid #93afd4`, borderRadius: '4px', padding: '5px 10px' }}>
-            <span style={{ fontSize: '14px', fontWeight: '800', color: BLUE, textTransform: 'uppercase', letterSpacing: '0.5px', flexShrink: 0 }}>Attendance</span>
-            <span style={{ fontSize: '14px', color: '#6b7280' }}>Present:</span>
-            <span style={{ fontSize: '17px', fontWeight: '900', color: BLUE, minWidth: '22px', textAlign: 'center' }}>{attendance.presentDays ?? '—'}</span>
-            <span style={{ fontSize: '14px', color: '#d1d5db' }}>|</span>
-            <span style={{ fontSize: '14px', color: '#6b7280' }}>Total Days:</span>
-            <span style={{ fontSize: '17px', fontWeight: '900', color: BLUE, minWidth: '22px', textAlign: 'center' }}>{attendance.totalWorkingDays ?? '—'}</span>
-            <span style={{ fontSize: '14px', color: '#d1d5db' }}>|</span>
-            <span style={{ fontSize: '14px', color: '#6b7280' }}>Percentage:</span>
-            <span style={{ fontSize: '17px', fontWeight: '900', minWidth: '38px', textAlign: 'center',
-              color: attendance.presentDays && attendance.totalWorkingDays
-                ? ((attendance.presentDays / attendance.totalWorkingDays) * 100) >= 75 ? '#15803d' : '#dc2626'
-                : BLUE }}>
-              {attendance.presentDays && attendance.totalWorkingDays
-                ? `${((attendance.presentDays / attendance.totalWorkingDays) * 100).toFixed(1)}%`
-                : '—'}
+        <div style={{display:'flex',gap:'6px',marginBottom:'4px'}}>
+          <div style={{flex:1,display:'flex',alignItems:'center',gap:'10px',background:BLUE_LIGHT,border:`1.5px solid #93afd4`,borderRadius:'4px',padding:'5px 10px'}}>
+            <span style={{fontSize:'14px',fontWeight:'800',color:BLUE,textTransform:'uppercase',letterSpacing:'0.5px',flexShrink:0}}>Attendance</span>
+            <span style={{fontSize:'14px',color:'#6b7280'}}>Present:</span>
+            <span style={{fontSize:'17px',fontWeight:'900',color:BLUE,minWidth:'22px',textAlign:'center'}}>{attendance.presentDays??'--'}</span>
+            <span style={{fontSize:'14px',color:'#d1d5db'}}>|</span>
+            <span style={{fontSize:'14px',color:'#6b7280'}}>Total Days:</span>
+            <span style={{fontSize:'17px',fontWeight:'900',color:BLUE,minWidth:'22px',textAlign:'center'}}>{attendance.totalWorkingDays??'--'}</span>
+            <span style={{fontSize:'14px',color:'#d1d5db'}}>|</span>
+            <span style={{fontSize:'14px',color:'#6b7280'}}>Percentage:</span>
+            <span style={{fontSize:'17px',fontWeight:'900',minWidth:'38px',textAlign:'center',color:attendance.presentDays&&attendance.totalWorkingDays?((attendance.presentDays/attendance.totalWorkingDays)*100)>=75?'#15803d':'#dc2626':BLUE}}>
+              {attendance.presentDays&&attendance.totalWorkingDays?`${((attendance.presentDays/attendance.totalWorkingDays)*100).toFixed(1)}%`:'--'}
             </span>
           </div>
         </div>
-        <div style={{ border: `1.5px solid #c7d2e8`, borderRadius: '4px', padding: '5px 10px', marginBottom: '0px', background: '#fffbeb', borderLeft: `3px solid #f59e0b` }}>
-          <span style={{ fontSize: '14px', fontWeight: '800', color: '#b45309', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Class Teacher's Remark: </span>
-          <span style={{ fontSize: '14.5px', color: '#374151' }}>{remark}</span>
+        <div style={{border:`1.5px solid #c7d2e8`,borderRadius:'4px',padding:'5px 10px',marginBottom:'0px',background:'#fffbeb',borderLeft:`3px solid #f59e0b`}}>
+          <span style={{fontSize:'14px',fontWeight:'800',color:'#b45309',textTransform:'uppercase',letterSpacing:'0.5px'}}>Class Teacher&apos;s Remark: </span>
+          <span style={{fontSize:'14.5px',color:'#374151'}}>{remark}</span>
         </div>
-
-        {/* RESULT */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          background: pctNum >= 33 ? 'linear-gradient(135deg, #f0fdf4, #dcfce7)' : '#fef2f2',
-          border: `1.5px solid ${pctNum >= 33 ? '#86efac' : '#fca5a5'}`,
-          borderRadius: '4px', padding: '5px 12px', marginTop: '5px', marginBottom: '0' }}>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',background:pctNum>=33?'linear-gradient(135deg,#f0fdf4,#dcfce7)':'#fef2f2',border:`1.5px solid ${pctNum>=33?'#86efac':'#fca5a5'}`,borderRadius:'4px',padding:'5px 12px',marginTop:'5px',marginBottom:'0'}}>
           <div>
-            <div style={{ fontSize: '15px', fontWeight: '800', color: pctNum >= 33 ? '#166534' : '#991b1b' }}>{resultQualified}</div>
-            <div style={{ fontSize: '14px', color: '#6b7280', marginTop: '1px' }}>
-              Place: {schoolInfo.schoolAddress || '—'} &nbsp;|&nbsp; Date: {today}
-            </div>
+            <div style={{fontSize:'15px',fontWeight:'800',color:pctNum>=33?'#166534':'#991b1b'}}>{resultQualified}</div>
+            <div style={{fontSize:'14px',color:'#6b7280',marginTop:'1px'}}>Place: {schoolInfo.schoolAddress||'--'} &nbsp;|&nbsp; Date: {today}</div>
           </div>
-          <div style={{
-            fontSize: '20px', fontWeight: '900', letterSpacing: '2px',
-            color: pctNum >= 33 ? '#166534' : '#991b1b',
-            border: `2px solid ${pctNum >= 33 ? '#86efac' : '#fca5a5'}`,
-            padding: '3px 14px', borderRadius: '4px', background: 'white',
-          }}>
-            {pctNum >= 33 ? 'PASS' : 'FAIL'}
+          <div style={{fontSize:'20px',fontWeight:'900',letterSpacing:'2px',color:pctNum>=33?'#166534':'#991b1b',border:`2px solid ${pctNum>=33?'#86efac':'#fca5a5'}`,padding:'3px 14px',borderRadius:'4px',background:'white'}}>
+            {pctNum>=33?'PASS':'FAIL'}
           </div>
         </div>
-
-        {/* ══ ADAPTIVE SPACER ══ */}
-        <div style={{ flex: '1 1 0px', minHeight: subCount > 8 ? '2mm' : '3mm', maxHeight: subCount > 8 ? '6mm' : '14mm' }} />
-
-        {/* SIGNATURES + GRADING + CHART */}
+        <div style={{flex:'1 1 0px',minHeight:subCount>8?'2mm':'3mm',maxHeight:subCount>8?'6mm':'14mm'}} />
         <div>
-          {/* SIGNATURES */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-            {["Parent's Signature", "Class Teacher's Signature"].map(sig => (
-              <div key={sig} style={{ textAlign: 'center', flex: 1, padding: '0 8px' }}>
-                <div style={{ height: '44px', borderBottom: `1.5px solid #374151`, marginBottom: '3px' }} />
-                <div style={{ fontSize: '14px', color: '#374151', fontFamily: 'Arial, sans-serif', fontWeight: '600' }}>{sig}</div>
+          <div style={{display:'flex',justifyContent:'space-between',marginBottom:'8px'}}>
+            {["Parent's Signature","Class Teacher's Signature"].map(sig => (
+              <div key={sig} style={{textAlign:'center',flex:1,padding:'0 8px'}}>
+                <div style={{height:'44px',borderBottom:`1.5px solid #374151`,marginBottom:'3px'}} />
+                <div style={{fontSize:'14px',color:'#374151',fontFamily:'Arial,sans-serif',fontWeight:'600'}}>{sig}</div>
               </div>
             ))}
-            <div style={{ textAlign: 'center', flex: 1, padding: '0 8px' }}>
-              <div style={{ height: '44px', borderBottom: `1.5px solid #374151`, marginBottom: '3px',
-                display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-                <img src={principalSign} alt="Principal Signature" style={{ maxHeight: '40px', maxWidth: '100%', objectFit: 'contain', marginBottom: '2px' }} />
+            <div style={{textAlign:'center',flex:1,padding:'0 8px'}}>
+              <div style={{height:'44px',borderBottom:`1.5px solid #374151`,marginBottom:'3px',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
+                <img src={principalSign} alt="Principal Signature" style={{maxHeight:'40px',maxWidth:'100%',objectFit:'contain',marginBottom:'2px'}} />
               </div>
-              <div style={{ fontSize: '14px', color: '#374151', fontFamily: 'Arial, sans-serif', fontWeight: '600' }}>Principal's Signature</div>
+              <div style={{fontSize:'14px',color:'#374151',fontFamily:'Arial,sans-serif',fontWeight:'600'}}>Principal&apos;s Signature</div>
             </div>
           </div>
-
-          {/* GRADING — horizontal */}
-          <div style={{ borderTop: `2px solid ${BLUE}`, paddingTop: '7px' }}>
-            <div style={{ fontSize: '11px', fontWeight: '800', marginBottom: '5px', color: BLUE, fontFamily: 'Arial, sans-serif', textTransform: 'uppercase', letterSpacing: '0.4px', textAlign: 'center' }}>
-              Grading Scale
-            </div>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
+          <div style={{borderTop:`2px solid ${BLUE}`,paddingTop:'7px'}}>
+            <div style={{fontSize:'11px',fontWeight:'800',marginBottom:'5px',color:BLUE,fontFamily:'Arial,sans-serif',textTransform:'uppercase',letterSpacing:'0.4px',textAlign:'center'}}>Grading Scale</div>
+            <table style={{width:'100%',borderCollapse:'collapse',fontSize:'11px'}}>
               <thead>
-                <tr>
-                  {[['91-100','A1'],['81-90','A2'],['71-80','B1'],['61-70','B2'],['51-60','C1'],['41-50','C2'],['33-40','D'],['32 & Below','E']].map(([r]) => (
-                    <th key={r} style={{ border: `1px solid ${BLUE}`, padding: '3px 4px', background: BLUE, color: 'white', fontWeight: '800', textAlign: 'center' }}>{r}</th>
-                  ))}
-                </tr>
+                <tr>{[['91-100','A1'],['81-90','A2'],['71-80','B1'],['61-70','B2'],['51-60','C1'],['41-50','C2'],['33-40','D'],['32 & Below','E']].map(([r])=>(<th key={r} style={{border:`1px solid ${BLUE}`,padding:'3px 4px',background:BLUE,color:'white',fontWeight:'800',textAlign:'center'}}>{r}</th>))}</tr>
               </thead>
               <tbody>
-                <tr>
-                  {[['91-100','A1'],['81-90','A2'],['71-80','B1'],['61-70','B2'],['51-60','C1'],['41-50','C2'],['33-40','D'],['32 & Below','E']].map(([, g]) => (
-                    <td key={g} style={{ border: '1px solid #c7d2e8', padding: '3px 4px', textAlign: 'center', fontWeight: '900', fontSize: '12px', color: gradeColor(g), background: gradeBg(g) }}>{g}</td>
-                  ))}
-                </tr>
+                <tr>{[['91-100','A1'],['81-90','A2'],['71-80','B1'],['61-70','B2'],['51-60','C1'],['41-50','C2'],['33-40','D'],['32 & Below','E']].map(([,g])=>(<td key={g} style={{border:'1px solid #c7d2e8',padding:'3px 4px',textAlign:'center',fontWeight:'900',fontSize:'12px',color:gradeColor(g),background:gradeBg(g)}}>{g}</td>))}</tr>
               </tbody>
             </table>
           </div>
         </div>
-
       </div>
     </div>
   );
 };
 
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   MAIN PAGE
-═══════════════════════════════════════════════════════════════════════════ */
 const MODES = [
   { key: 'term1', label: 'Term-1 Result',  termKey: 'term1', termLabel: 'TERM-1' },
   { key: 'final', label: 'Final Combined', termKey: null,    termLabel: 'FINAL'  },
@@ -1079,15 +628,11 @@ const ResultGeneration = () => {
         API.get(`/admin/results/final/${selectedClass}?examIds=${examIds.join(',')}`),
         API.get(`/attendance/class-report/${selectedClass}?academicYear=${viewYear}`).catch(() => ({ data: [] })),
       ]);
-      // Merge attendance into results by UID
       const attMap = {};
       (attendanceRes.data || []).forEach(a => {
         attMap[a.UID] = { presentDays: a.presentCount, totalWorkingDays: a.totalCount };
       });
-      const merged = resultRes.data.map(s => ({
-        ...s,
-        attendance: attMap[s.UID] || s.attendance || {},
-      }));
+      const merged = resultRes.data.map(s => ({ ...s, attendance: attMap[s.UID] || s.attendance || {} }));
       setResults(merged);
       setCurrentIdx(0);
     } catch (err) {
@@ -1100,15 +645,7 @@ const ResultGeneration = () => {
       @page { size: A4; margin: 0; }
       * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
       body { margin: 0; padding: 0; background: white; }
-      .marksheet-page {
-        width: 210mm;
-        height: 297mm;
-        box-sizing: border-box;
-        page-break-after: always;
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-      }
+      .marksheet-page { width:210mm; height:297mm; box-sizing:border-box; page-break-after:always; overflow:hidden; display:flex; flex-direction:column; }
       .marksheet-page:last-child { page-break-after: avoid; }
     </style>`;
     const win = window.open('', '_blank');
@@ -1126,13 +663,13 @@ const ResultGeneration = () => {
   const activeMode = MODES.find(m => m.key === mode);
   const className  = classes.find(c => c._id === selectedClass)?.className || '';
   const schoolInfo = {
-    schoolName:          settings?.schoolName          || 'School Name',
-    schoolSlogan:        settings?.schoolSlogan         || '',
-    schoolAddress:       settings?.schoolAddress        || '',
-    schoolLogo:          settings?.schoolLogo           || '',
-    affiliationNumber:   settings?.affiliationNumber    || '',
-    schoolCode:          settings?.schoolCode           || '',
-    currentAcademicYear: settings?.currentAcademicYear  || viewYear,
+    schoolName:        settings?.schoolName        || 'School Name',
+    schoolSlogan:      settings?.schoolSlogan       || '',
+    schoolAddress:     settings?.schoolAddress      || '',
+    schoolLogo:        settings?.schoolLogo         || '',
+    affiliationNumber: settings?.affiliationNumber  || '',
+    schoolCode:        settings?.schoolCode         || '',
+    currentAcademicYear: settings?.currentAcademicYear || viewYear,
   };
 
   const renderMarksheet = (student) => {
@@ -1149,13 +686,11 @@ const ResultGeneration = () => {
   return (
     <div className="space-y-6">
       {toast && <Toast {...toast} onClose={() => setToast(null)} />}
-
       <div>
         <h1 className="text-2xl font-black text-indigo-700 tracking-tight">Result Generation</h1>
         <p className="text-sm text-gray-500 font-medium">Generate marksheets per term or combined.</p>
       </div>
 
-      {/* Session */}
       <div className="bg-indigo-50 p-4 rounded-2xl border border-indigo-100 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Calendar size={16} className="text-indigo-600" />
@@ -1169,7 +704,6 @@ const ResultGeneration = () => {
         </select>
       </div>
 
-      {/* Mode tabs */}
       <div className="flex gap-2">
         {MODES.map(m => (
           <button key={m.key} onClick={() => { setMode(m.key); setResults([]); }}
@@ -1180,14 +714,12 @@ const ResultGeneration = () => {
         ))}
       </div>
 
-      {/* Filters */}
       <div className="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm space-y-4">
         <select className="w-full h-12 bg-gray-50 rounded-xl px-4 font-bold outline-none"
           value={selectedClass} onChange={e => { setSelectedClass(e.target.value); setResults([]); }}>
           <option value="">Select Class...</option>
           {classes.map(c => <option key={c._id} value={c._id}>Grade {c.className}</option>)}
         </select>
-
         <div className="space-y-2">
           <p className="text-xs font-black text-gray-400 uppercase ml-1">
             {mode === 'term1' ? 'Select Term-1 Exams' : 'Select Exams to Combine'}
@@ -1196,9 +728,7 @@ const ResultGeneration = () => {
             {examsLoading
               ? <p className="text-sm text-gray-400 col-span-2 py-2 text-center">Loading exams...</p>
               : (() => {
-                  const filtered = mode === 'term1'
-                    ? exams.filter(e => e.term === 'Term-1' || !e.term)
-                    : exams;
+                  const filtered = mode === 'term1' ? exams.filter(e => e.term === 'Term-1' || !e.term) : exams;
                   return filtered.length === 0
                     ? <p className="text-sm text-gray-400 col-span-2 py-2 text-center">No exams found for {viewYear}</p>
                     : filtered.map(e => (
@@ -1216,8 +746,8 @@ const ResultGeneration = () => {
                           <div>
                             <p className="text-xs font-black text-gray-800">{e.examName}</p>
                             <p className="text-[10px] font-bold uppercase"
-                              style={{ color: e.status === 'Completed' ? '#16a34a' : e.status === 'Ongoing' ? '#d97706' : '#6b7280' }}>
-                              {e.term || 'Term-1'} · {e.component || e.examType} · {e.status}
+                              style={{ color: e.status==='Completed'?'#16a34a':e.status==='Ongoing'?'#d97706':'#6b7280' }}>
+                              {e.term||'Term-1'} · {e.component||e.examType} · {e.status}
                             </p>
                           </div>
                         </button>
@@ -1225,31 +755,28 @@ const ResultGeneration = () => {
                 })()}
           </div>
         </div>
-
         <button onClick={handleGenerate} disabled={loading}
           className="w-full h-12 bg-indigo-600 text-white font-black rounded-xl hover:bg-indigo-700 transition-all uppercase tracking-tight disabled:opacity-50">
           {loading ? 'Generating...' : 'Generate Marksheets'}
         </button>
       </div>
 
-      {/* Results */}
       {loading ? (
         <div className="py-20"><LoadingSpinner size="lg" /></div>
       ) : results.length > 0 ? (
         <div className="space-y-4">
-          {/* Controls */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col sm:flex-row items-center justify-between gap-3">
             <div>
               <p className="text-xs font-black text-gray-400 uppercase">{activeMode.label} · Grade {className}</p>
               <p className="text-sm font-bold text-gray-700">{results.length} marksheets generated</p>
             </div>
             <div className="flex items-center gap-2 flex-wrap justify-center">
-              <button onClick={() => setCurrentIdx(i => Math.max(0, i - 1))} disabled={currentIdx === 0}
+              <button onClick={() => setCurrentIdx(i => Math.max(0, i-1))} disabled={currentIdx===0}
                 className="w-9 h-9 rounded-xl border-2 border-gray-100 flex items-center justify-center hover:border-indigo-300 disabled:opacity-30 transition-all">
                 <ChevronLeft size={16} />
               </button>
-              <span className="text-sm font-black text-gray-700 min-w-[80px] text-center">{currentIdx + 1} / {results.length}</span>
-              <button onClick={() => setCurrentIdx(i => Math.min(results.length - 1, i + 1))} disabled={currentIdx === results.length - 1}
+              <span className="text-sm font-black text-gray-700 min-w-[80px] text-center">{currentIdx+1} / {results.length}</span>
+              <button onClick={() => setCurrentIdx(i => Math.min(results.length-1, i+1))} disabled={currentIdx===results.length-1}
                 className="w-9 h-9 rounded-xl border-2 border-gray-100 flex items-center justify-center hover:border-indigo-300 disabled:opacity-30 transition-all">
                 <ChevronRight size={16} />
               </button>
@@ -1264,42 +791,22 @@ const ResultGeneration = () => {
             </div>
           </div>
 
-          {/* Student pills */}
           <div className="flex gap-2 flex-wrap">
-            {results.map((s, i) => (
+            {results.map((s,i) => (
               <button key={s.studentId} onClick={() => setCurrentIdx(i)}
                 className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all border-2 ${
-                  i === currentIdx ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-600 border-gray-100 hover:border-indigo-300'}`}>
+                  i===currentIdx ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-600 border-gray-100 hover:border-indigo-300'}`}>
                 {s.name?.split(' ')[0]}
               </button>
             ))}
           </div>
 
-          {/* PREVIEW */}
-          <div style={{
-            background: 'linear-gradient(135deg, #e0e7ff 0%, #ede9fe 50%, #dbeafe 100%)',
-            borderRadius: '20px', padding: '28px 20px',
-            boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.08)',
-          }}>
-            <div style={{ position: 'relative', width: 'fit-content', margin: '0 auto' }}>
-              {/* Paper stack shadows */}
-              <div style={{ position: 'absolute', inset: '0', top: '8px', left: '6px', background: '#c7d2e8', borderRadius: '4px', zIndex: 0 }} />
-              <div style={{ position: 'absolute', inset: '0', top: '4px', left: '3px', background: '#d8e0f0', borderRadius: '4px', zIndex: 1 }} />
-              {/* Scaled preview — scale chosen so the A4 fits in the viewport */}
-              <div style={{
-                position: 'relative', zIndex: 2,
-                boxShadow: '0 8px 32px rgba(0,0,0,0.22), 0 2px 8px rgba(0,0,0,0.12)',
-                borderRadius: '3px',
-                width: '750px',
-                height: '1058px',
-                overflow: 'hidden',
-              }}>
-                <div style={{
-                  transform: 'scale(0.942)',
-                  transformOrigin: 'top left',
-                  width: '796px',
-                  height: '1122px',
-                }}>
+          <div style={{ background:'linear-gradient(135deg,#e0e7ff 0%,#ede9fe 50%,#dbeafe 100%)', borderRadius:'20px', padding:'28px 20px', boxShadow:'inset 0 2px 8px rgba(0,0,0,0.08)' }}>
+            <div style={{ position:'relative', width:'fit-content', margin:'0 auto' }}>
+              <div style={{ position:'absolute', inset:'0', top:'8px', left:'6px', background:'#c7d2e8', borderRadius:'4px', zIndex:0 }} />
+              <div style={{ position:'absolute', inset:'0', top:'4px', left:'3px', background:'#d8e0f0', borderRadius:'4px', zIndex:1 }} />
+              <div style={{ position:'relative', zIndex:2, boxShadow:'0 8px 32px rgba(0,0,0,0.22),0 2px 8px rgba(0,0,0,0.12)', borderRadius:'3px', width:'750px', height:'1058px', overflow:'hidden' }}>
+                <div style={{ transform:'scale(0.942)', transformOrigin:'top left', width:'796px', height:'1122px' }}>
                   {mode === 'final' ? (
                     <CombinedMarksheet student={results[currentIdx]} schoolInfo={schoolInfo} academicYear={viewYear} />
                   ) : (
@@ -1312,8 +819,7 @@ const ResultGeneration = () => {
             </div>
           </div>
 
-          {/* Hidden print area */}
-          <div ref={printRef} style={{ display: 'none' }}>
+          <div ref={printRef} style={{ display:'none' }}>
             {results.map(s => renderMarksheet(s))}
           </div>
         </div>

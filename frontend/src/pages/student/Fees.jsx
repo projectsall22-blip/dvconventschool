@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   CreditCard, CheckCircle, AlertCircle, Clock, X, Receipt,
-  Wallet, BadgeCheck, Banknote, Smartphone, BookOpen,
+  Wallet, BadgeCheck, Banknote, Smartphone, BookOpen, ExternalLink, Copy,
 } from 'lucide-react';
 import API from '../../api/axios';
 import Card from '../../components/common/Card';
@@ -36,6 +36,13 @@ const StatusPill = ({ status }) => {
 };
 
 // ── UPI Pay Modal ─────────────────────────────────────────────────────────────
+const UPI_APPS = [
+    { name: 'Google Pay',  color: 'from-blue-500 to-blue-600',   scheme: (upiId, amt, note) => `tez://upi/pay?pa=${upiId}&pn=School+Fee&am=${amt}&tn=${encodeURIComponent(note)}&cu=INR` },
+    { name: 'PhonePe',     color: 'from-violet-500 to-purple-600', scheme: (upiId, amt, note) => `phonepe://pay?pa=${upiId}&pn=School+Fee&am=${amt}&tn=${encodeURIComponent(note)}&cu=INR` },
+    { name: 'Paytm',       color: 'from-sky-400 to-cyan-500',    scheme: (upiId, amt, note) => `paytmmp://pay?pa=${upiId}&pn=School+Fee&am=${amt}&tn=${encodeURIComponent(note)}&cu=INR` },
+    { name: 'BHIM / Any',  color: 'from-orange-400 to-amber-500', scheme: (upiId, amt, note) => `upi://pay?pa=${upiId}&pn=School+Fee&am=${amt}&tn=${encodeURIComponent(note)}&cu=INR` },
+];
+
 const PayModal = ({ student, academicYear, monthStatus, monthlyFeeAmt, preselectedMonth, onClose, onSuccess }) => {
     const [step, setStep] = useState('months');
     const [selectedMonths, setSelectedMonths] = useState(() =>
@@ -46,6 +53,8 @@ const PayModal = ({ student, academicYear, monthStatus, monthlyFeeAmt, preselect
     const [paidBy, setPaidBy] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
+    const [copied, setCopied] = useState(false);
+    const txnRef = useRef(null);
 
     const payableMonths = (monthStatus || []).filter(m => !m.isPaid && m.isActive);
     const monthAmounts = {};
@@ -53,10 +62,28 @@ const PayModal = ({ student, academicYear, monthStatus, monthlyFeeAmt, preselect
         monthAmounts[ms.month] = ms.isPaid ? 0 : Math.max(0, ms.monthDue - ms.paidAmt) || monthlyFeeAmt || 0;
     });
     const totalSelected = Array.from(selectedMonths).reduce((s, m) => s + (monthAmounts[m] || 0), 0);
+    const monthsArr = Array.from(selectedMonths);
 
     const toggleMonth = (m) => setSelectedMonths(prev => {
         const next = new Set(prev); next.has(m) ? next.delete(m) : next.add(m); return next;
     });
+
+    const copyUpiId = () => {
+        if (upiInfo?.upiId) {
+            navigator.clipboard.writeText(upiInfo.upiId).catch(() => {});
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        }
+    };
+
+    // Open UPI app via deep link, then move to txn ID step
+    const openUpiApp = (schemeBuilder) => {
+        const note = `School Fee - ${student.name} - ${monthsArr.join(',')}`;
+        const url = schemeBuilder(upiInfo.upiId, totalSelected.toFixed(2), note);
+        window.location.href = url;
+        // After a short delay (user returns from UPI app), show txn ID step
+        setTimeout(() => setStep('txn'), 1800);
+    };
 
     const goToUpi = async () => {
         if (selectedMonths.size === 0) return setError('Select at least one month');
@@ -74,7 +101,7 @@ const PayModal = ({ student, academicYear, monthStatus, monthlyFeeAmt, preselect
         try {
             await API.post('/fees/upi/submit', {
                 studentId: student._id, academicYear,
-                months: Array.from(selectedMonths),
+                months: monthsArr,
                 monthAmounts, totalAmount: totalSelected,
                 transactionId: txnId.trim(),
                 paidBy: paidBy.trim() || student.name,
@@ -87,104 +114,187 @@ const PayModal = ({ student, academicYear, monthStatus, monthlyFeeAmt, preselect
     return (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
             <div className="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 sm:zoom-in-95 duration-300">
+
+                {/* Header */}
                 <div className="bg-primary px-6 pt-5 pb-6">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-blue-300 text-xs">Pay Fee — {student.name} · Class {student.class}</p>
-                            <p className="text-white font-bold text-xl mt-0.5">{fmt(totalSelected)}</p>
+                            <p className="text-blue-300 text-xs">{student.name} · Class {student.class}</p>
+                            <p className="text-white font-bold text-2xl mt-0.5">{fmt(totalSelected)}</p>
+                            {monthsArr.length > 0 && (
+                                <p className="text-blue-200 text-xs mt-0.5">{monthsArr.join(', ')}</p>
+                            )}
                         </div>
                         <button onClick={onClose} className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center">
                             <X size={16} className="text-white" />
                         </button>
                     </div>
+                    {/* Step indicator */}
+                    <div className="flex items-center gap-1.5 mt-4">
+                        {['months','upi','txn','done'].map((s, i) => (
+                            <div key={s} className={`h-1 rounded-full flex-1 transition-all ${
+                                ['months','upi','txn','done'].indexOf(step) >= i ? 'bg-white' : 'bg-white/30'
+                            }`} />
+                        ))}
+                    </div>
                 </div>
 
-                <div className="px-6 py-5 space-y-4 max-h-[75vh] overflow-y-auto">
-                    {step === 'months' && (<>
-                        <div className="flex items-center justify-between">
-                            <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Select Months</p>
-                            {payableMonths.length > 0 && (
-                                <button onClick={() => setSelectedMonths(new Set(payableMonths.map(m => m.month)))}
-                                    className="text-xs font-bold text-primary hover:underline">Select Due</button>
-                            )}
-                        </div>
-                        <div className="space-y-2">
-                            {(monthStatus || []).filter(ms => ms.isActive || ms.isPaid).map(ms => {
-                                const due = Math.max(0, ms.monthDue - ms.paidAmt);
-                                const isSelected = selectedMonths.has(ms.month);
-                                return (
-                                    <button key={ms.month} type="button" disabled={ms.isPaid}
-                                        onClick={() => !ms.isPaid && toggleMonth(ms.month)}
-                                        className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 transition-all text-left ${
-                                            ms.isPaid ? 'opacity-50 cursor-not-allowed bg-slate-50 border-slate-100'
-                                            : isSelected ? 'border-primary bg-blue-50'
-                                            : 'border-slate-200 bg-white hover:border-slate-300'
-                                        }`}>
-                                        <div className="flex items-center gap-3">
-                                            <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 ${isSelected ? 'bg-primary border-primary' : 'border-slate-300'}`}>
-                                                {isSelected && <CheckCircle size={12} className="text-white" />}
+                <div className="px-6 py-5 space-y-4 max-h-[70vh] overflow-y-auto">
+
+                    {/* ── STEP 1: Select Months ── */}
+                    {step === 'months' && (
+                        <>
+                            <div className="flex items-center justify-between">
+                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Select Months to Pay</p>
+                                {payableMonths.length > 0 && (
+                                    <button onClick={() => setSelectedMonths(new Set(payableMonths.map(m => m.month)))}
+                                        className="text-xs font-bold text-primary hover:underline">Select All Due</button>
+                                )}
+                            </div>
+                            <div className="space-y-2">
+                                {(monthStatus || []).filter(ms => ms.isActive || ms.isPaid).map(ms => {
+                                    const due = Math.max(0, ms.monthDue - ms.paidAmt);
+                                    const isSelected = selectedMonths.has(ms.month);
+                                    return (
+                                        <button key={ms.month} type="button" disabled={ms.isPaid}
+                                            onClick={() => !ms.isPaid && toggleMonth(ms.month)}
+                                            className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 transition-all text-left ${
+                                                ms.isPaid ? 'opacity-50 cursor-not-allowed bg-slate-50 border-slate-100'
+                                                : isSelected ? 'border-primary bg-blue-50'
+                                                : 'border-slate-200 bg-white hover:border-slate-300'
+                                            }`}>
+                                            <div className="flex items-center gap-3">
+                                                <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 ${isSelected ? 'bg-primary border-primary' : 'border-slate-300'}`}>
+                                                    {isSelected && <CheckCircle size={12} className="text-white" />}
+                                                </div>
+                                                <p className="text-sm font-semibold text-slate-800">{ms.month}</p>
                                             </div>
-                                            <p className="text-sm font-semibold text-slate-800">{ms.month}</p>
-                                        </div>
-                                        {ms.isPaid
-                                            ? <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">Paid</span>
-                                            : <span className={`text-sm font-bold ${ms.isOverdue ? 'text-danger' : 'text-slate-800'}`}>{fmt(due)}</span>
-                                        }
-                                    </button>
-                                );
-                            })}
-                        </div>
-                        {error && <p className="text-xs text-danger bg-red-50 rounded-xl px-4 py-2">{error}</p>}
-                        <button onClick={goToUpi} disabled={selectedMonths.size === 0}
-                            className="w-full disabled:opacity-50 bg-primary text-white font-bold rounded-2xl py-3.5 flex items-center justify-center gap-2">
-                            <Smartphone size={18} /> Pay {fmt(totalSelected)} via UPI
-                        </button>
-                    </>)}
-
-                    {step === 'upi' && (<>
-                        <div className="text-center">
-                            <p className="font-bold text-slate-800">Scan & Pay</p>
-                            <p className="text-sm text-slate-500 mt-0.5">Use any UPI app — Google Pay, PhonePe, Paytm</p>
-                        </div>
-                        {upiInfo?.upiQrCode ? (
-                            <div className="flex justify-center">
-                                <img src={upiInfo.upiQrCode} alt="UPI QR" className="w-48 h-48 border-2 border-slate-200 rounded-2xl object-contain" />
+                                            {ms.isPaid
+                                                ? <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">Paid</span>
+                                                : <span className={`text-sm font-bold ${ms.isOverdue ? 'text-danger' : 'text-slate-800'}`}>{fmt(due)}</span>
+                                            }
+                                        </button>
+                                    );
+                                })}
                             </div>
-                        ) : (
-                            <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl p-8 text-center">
-                                <Smartphone size={32} className="text-slate-300 mx-auto mb-2" />
-                                <p className="text-slate-400 text-sm">QR not configured by admin</p>
-                            </div>
-                        )}
-                        {upiInfo?.upiId && (
-                            <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 text-center">
-                                <p className="text-xs text-blue-500 font-medium">UPI ID</p>
-                                <p className="font-black text-blue-800 text-lg">{upiInfo.upiId}</p>
-                                <p className="text-xs text-blue-500 mt-0.5">Pay exactly <span className="font-bold">{fmt(totalSelected)}</span></p>
-                            </div>
-                        )}
-                        <div>
-                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wide block mb-1.5">UPI Transaction ID *</label>
-                            <input value={txnId} onChange={e => setTxnId(e.target.value)} placeholder="e.g. 123456789012"
-                                className="w-full border-2 border-slate-200 focus:border-primary rounded-xl px-4 py-3 text-sm focus:outline-none transition-colors" />
-                            <p className="text-xs text-slate-400 mt-1">Find this in your UPI app after payment</p>
-                        </div>
-                        <div>
-                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wide block mb-1.5">Paid By (optional)</label>
-                            <input value={paidBy} onChange={e => setPaidBy(e.target.value)} placeholder="Parent / Guardian name"
-                                className="w-full border-2 border-slate-200 focus:border-primary rounded-xl px-4 py-3 text-sm focus:outline-none transition-colors" />
-                        </div>
-                        {error && <p className="text-xs text-danger bg-red-50 rounded-xl px-4 py-2">{error}</p>}
-                        <div className="flex gap-3">
-                            <button onClick={() => setStep('months')} className="flex-1 border-2 border-slate-200 text-slate-600 font-semibold rounded-2xl py-3 text-sm hover:bg-slate-50 transition-colors">Back</button>
-                            <button onClick={handleSubmit} disabled={submitting || !txnId.trim()}
-                                className="flex-1 disabled:opacity-50 bg-primary text-white font-bold rounded-2xl py-3 text-sm flex items-center justify-center gap-2">
-                                {submitting ? <><LoadingSpinner size="sm" color="white" /> Submitting...</> : 'Submit Payment'}
+                            {error && <p className="text-xs text-danger bg-red-50 rounded-xl px-4 py-2">{error}</p>}
+                            <button onClick={goToUpi} disabled={selectedMonths.size === 0}
+                                className="w-full disabled:opacity-50 bg-primary text-white font-bold rounded-2xl py-3.5 flex items-center justify-center gap-2 text-base">
+                                <Smartphone size={18} /> Pay {fmt(totalSelected)} via UPI
                             </button>
-                        </div>
-                        <p className="text-center text-xs text-slate-400">Admin will confirm your payment within 24 hours</p>
-                    </>)}
+                        </>
+                    )}
 
+                    {/* ── STEP 2: Choose UPI App ── */}
+                    {step === 'upi' && (
+                        <>
+                            <div className="text-center">
+                                <p className="font-black text-slate-800 text-lg">Choose UPI App</p>
+                                <p className="text-sm text-slate-500 mt-1">
+                                    Tap an app — it will open with <span className="font-bold text-primary">{fmt(totalSelected)}</span> pre-filled
+                                </p>
+                            </div>
+
+                            {/* UPI App Buttons */}
+                            {upiInfo?.upiId ? (
+                                <div className="grid grid-cols-2 gap-3">
+                                    {UPI_APPS.map(app => (
+                                        <button key={app.name} onClick={() => openUpiApp(app.scheme)}
+                                            className={`bg-gradient-to-br ${app.color} text-white font-bold rounded-2xl py-4 flex flex-col items-center gap-2 shadow-md hover:shadow-lg hover:scale-[1.03] active:scale-95 transition-all`}>
+                                            <ExternalLink size={20} />
+                                            <span className="text-sm">{app.name}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-center text-sm text-amber-700">
+                                    UPI ID not configured by admin yet. Please pay via QR or contact school.
+                                </div>
+                            )}
+
+                            {/* UPI ID display + copy */}
+                            {upiInfo?.upiId && (
+                                <div className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 flex items-center justify-between gap-3">
+                                    <div>
+                                        <p className="text-xs text-slate-400 font-medium">UPI ID</p>
+                                        <p className="font-black text-slate-800">{upiInfo.upiId}</p>
+                                    </div>
+                                    <button onClick={copyUpiId}
+                                        className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl transition-all ${copied ? 'bg-emerald-100 text-emerald-700' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'}`}>
+                                        <Copy size={12} /> {copied ? 'Copied!' : 'Copy'}
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* QR fallback */}
+                            {upiInfo?.upiQrCode && (
+                                <details className="group">
+                                    <summary className="text-xs font-bold text-primary cursor-pointer text-center hover:underline">
+                                        Show QR Code instead
+                                    </summary>
+                                    <div className="flex justify-center mt-3">
+                                        <img src={upiInfo.upiQrCode} alt="UPI QR" className="w-44 h-44 border-2 border-slate-200 rounded-2xl object-contain" />
+                                    </div>
+                                </details>
+                            )}
+
+                            <div className="flex gap-3 pt-1">
+                                <button onClick={() => setStep('months')} className="flex-1 border-2 border-slate-200 text-slate-600 font-semibold rounded-2xl py-3 text-sm hover:bg-slate-50 transition-colors">Back</button>
+                                <button onClick={() => setStep('txn')} className="flex-1 bg-slate-100 text-slate-700 font-bold rounded-2xl py-3 text-sm hover:bg-slate-200 transition-colors">
+                                    Already Paid? Enter Txn ID →
+                                </button>
+                            </div>
+                        </>
+                    )}
+
+                    {/* ── STEP 3: Enter Transaction ID ── */}
+                    {step === 'txn' && (
+                        <>
+                            <div className="bg-emerald-50 border border-emerald-200 rounded-2xl px-4 py-3 text-center">
+                                <p className="font-bold text-emerald-800">Payment Done?</p>
+                                <p className="text-sm text-emerald-600 mt-0.5">Enter the Transaction ID from your UPI app to confirm</p>
+                            </div>
+
+                            <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-2.5 flex items-center justify-between">
+                                <span className="text-xs text-blue-500">Amount Paid</span>
+                                <span className="font-black text-primary text-lg">{fmt(totalSelected)}</span>
+                            </div>
+
+                            <div>
+                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wide block mb-1.5">UPI Transaction ID *</label>
+                                <input
+                                    ref={txnRef}
+                                    autoFocus
+                                    value={txnId}
+                                    onChange={e => setTxnId(e.target.value)}
+                                    placeholder="e.g. 407311258934"
+                                    className="w-full border-2 border-slate-200 focus:border-primary rounded-xl px-4 py-3 text-sm focus:outline-none transition-colors font-mono"
+                                />
+                                <p className="text-xs text-slate-400 mt-1.5">
+                                    Find in your UPI app: <span className="font-semibold">Payment History → Transaction Details</span>
+                                </p>
+                            </div>
+
+                            <div>
+                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wide block mb-1.5">Paid By (optional)</label>
+                                <input value={paidBy} onChange={e => setPaidBy(e.target.value)} placeholder="Parent / Guardian name"
+                                    className="w-full border-2 border-slate-200 focus:border-primary rounded-xl px-4 py-3 text-sm focus:outline-none transition-colors" />
+                            </div>
+
+                            {error && <p className="text-xs text-danger bg-red-50 rounded-xl px-4 py-2">{error}</p>}
+
+                            <div className="flex gap-3">
+                                <button onClick={() => setStep('upi')} className="flex-1 border-2 border-slate-200 text-slate-600 font-semibold rounded-2xl py-3 text-sm hover:bg-slate-50 transition-colors">Back</button>
+                                <button onClick={handleSubmit} disabled={submitting || !txnId.trim()}
+                                    className="flex-1 disabled:opacity-50 bg-primary text-white font-bold rounded-2xl py-3 text-sm flex items-center justify-center gap-2">
+                                    {submitting ? <><LoadingSpinner size="sm" color="white" /> Submitting...</> : 'Submit'}
+                                </button>
+                            </div>
+                            <p className="text-center text-xs text-slate-400">Admin will verify and confirm within 24 hours</p>
+                        </>
+                    )}
+
+                    {/* ── STEP 4: Done ── */}
                     {step === 'done' && (
                         <div className="text-center space-y-4 py-4">
                             <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto">
@@ -192,13 +302,14 @@ const PayModal = ({ student, academicYear, monthStatus, monthlyFeeAmt, preselect
                             </div>
                             <div>
                                 <p className="font-black text-slate-900 text-lg">Submitted!</p>
-                                <p className="text-slate-500 text-sm mt-1">Your payment is pending admin confirmation.</p>
-                                <p className="text-slate-400 text-xs mt-1">You'll see it as "Pending Confirmation" in history.</p>
+                                <p className="text-slate-500 text-sm mt-1">Payment is pending admin confirmation.</p>
+                                <p className="text-slate-400 text-xs mt-1">You'll see "Pending Confirmation" in history until verified.</p>
                             </div>
                             <button onClick={() => { onSuccess(); onClose(); }}
                                 className="w-full bg-primary text-white font-bold rounded-2xl py-3">Done</button>
                         </div>
                     )}
+
                 </div>
             </div>
         </div>

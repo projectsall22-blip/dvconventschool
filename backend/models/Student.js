@@ -51,6 +51,15 @@ const studentSchema = new mongoose.Schema({
     },
 
     // ============================
+    // Transport / Bus
+    // ============================
+    busRoute: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'BusRoute',
+        default: null,
+    },
+
+    // ============================
     // Parent / Guardian Info
     // ============================
     fatherName: {
@@ -216,6 +225,20 @@ const studentSchema = new mongoose.Schema({
     tcIssuedAt: {
         type: Date,
         default: null
+    },
+
+    tcDetails: {
+        tcNumber:       { type: String, default: '' },
+        bookNo:         { type: String, default: '' },
+        srNo:           { type: String, default: '' },
+        religion:       { type: String, default: '' },
+        caste:          { type: String, default: '' },
+        admissionDate:  { type: Date,   default: null },
+        admissionClass: { type: String, default: '' },
+        leavingDate:    { type: Date,   default: null },
+        applicationDate:{ type: Date,   default: null },
+        reason:         { type: String, default: '' },
+        remark:         { type: String, default: '' },
     }
 
 }, { timestamps: true });

@@ -2,6 +2,7 @@ const FeeStructure = require('../models/FeeStructure');
 const FeePayment   = require('../models/FeePayment');
 const Student      = require('../models/Student');
 const Class        = require('../models/Class');
+const BusRoute     = require('../models/BusRoute');
 
 // ─── FEE STRUCTURE ────────────────────────────────────────────────────────────
 const getFeeStructures = async (req, res) => {
@@ -130,7 +131,7 @@ const getStudentFeeDetails = async (req, res) => {
     const { studentId } = req.params;
     const { academicYear } = req.query;
 
-    const student = await Student.findById(studentId).select('name class admissionNo UID admissionType');
+    const student = await Student.findById(studentId).select('name class admissionNo UID admissionType busRoute');
     if (!student) return res.status(404).json({ message: 'Student not found' });
 
     const filter = { student: studentId };
@@ -180,6 +181,16 @@ const getStudentFeeDetails = async (req, res) => {
         });
     }
 
+    // ── Bus fee: add to every month if student has a bus route ────────────────
+    const busRoute = student.busRoute
+        ? await BusRoute.findById(student.busRoute).select('routeName monthlyFee')
+        : null;
+    if (busRoute && busRoute.monthlyFee > 0) {
+        MONTHS.forEach(m => {
+            monthFeeMap[m].extraFees.push({ name: `Bus Fee (${busRoute.routeName})`, amount: busRoute.monthlyFee });
+        });
+    }
+
     // Effective monthly fee for presets (use most common base fee)
     const effectiveMonthlyFee = monthlyFeeAmt || (
         Object.values(monthFeeMap).map(m => m.baseFee).find(f => f > 0) || 0
@@ -214,7 +225,7 @@ const getStudentFeeDetails = async (req, res) => {
         };
     });
 
-    res.json({ student, payments, totalPaid, totalDue, structure, monthStatus, monthlyFeeAmt: effectiveMonthlyFee });
+    res.json({ student, payments, totalPaid, totalDue, structure, monthStatus, monthlyFeeAmt: effectiveMonthlyFee, busRoute: busRoute || null });
 };
 
 const getFeeSummary = async (req, res) => {
@@ -486,9 +497,65 @@ const getClassFeeStatus = async (req, res) => {
     res.json({ className: cls.className, months: activeMonths, students: result });
 };
 
+// ─── DAILY COLLECTION REPORT ─────────────────────────────────────────────────
+// GET /api/fees/daily?date=2025-04-12&academicYear=2025-26
+const getDailyCollection = async (req, res) => {
+    const { date, academicYear } = req.query;
+
+    // Build date range — default to today
+    const target = date ? new Date(date) : new Date();
+    const start  = new Date(target); start.setHours(0, 0, 0, 0);
+    const end    = new Date(target); end.setHours(23, 59, 59, 999);
+
+    const filter = { createdAt: { $gte: start, $lte: end } };
+    if (academicYear) filter.academicYear = academicYear;
+
+    const payments = await FeePayment.find(filter)
+        .populate('student', 'name class admissionNo UID')
+        .populate('collectedBy', 'name')
+        .sort({ createdAt: 1 });
+
+    // Group by groupReceiptNo so multi-month payments appear as one entry
+    const groups = {};
+    payments.forEach(p => {
+        const key = p.groupReceiptNo || p.receiptNo || String(p._id);
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(p);
+    });
+
+    const entries = Object.values(groups).map(group => {
+        const first = group[0];
+        return {
+            receiptNo:      first.groupReceiptNo || first.receiptNo,
+            student:        first.student,
+            months:         group.map(p => p.month || 'General').join(', '),
+            monthCount:     group.length,
+            totalAmount:    group.reduce((s, p) => s + p.totalAmount, 0),
+            discount:       group.reduce((s, p) => s + (p.discount || 0), 0),
+            fine:           group.reduce((s, p) => s + (p.fine || 0), 0),
+            amountPaid:     group.reduce((s, p) => s + p.amountPaid, 0),
+            paymentMode:    first.paymentMode,
+            collectedByModel: first.collectedByModel,
+            paidBy:         first.paidBy,
+            createdAt:      first.createdAt,
+        };
+    });
+
+    // Totals
+    const totalCash    = entries.filter(e => e.paymentMode === 'Cash').reduce((s, e) => s + e.amountPaid, 0);
+    const totalOnline  = entries.filter(e => e.paymentMode !== 'Cash').reduce((s, e) => s + e.amountPaid, 0);
+    const totalAmount  = entries.reduce((s, e) => s + e.amountPaid, 0);
+    const byAdmin      = entries.filter(e => e.collectedByModel === 'Admin').reduce((s, e) => s + e.amountPaid, 0);
+    const byStudent    = entries.filter(e => e.collectedByModel === 'Student').reduce((s, e) => s + e.amountPaid, 0);
+    const byMode       = {};
+    entries.forEach(e => { byMode[e.paymentMode] = (byMode[e.paymentMode] || 0) + e.amountPaid; });
+
+    res.json({ date: target.toISOString().split('T')[0], entries, totalAmount, totalCash, totalOnline, byAdmin, byStudent, byMode });
+};
+
 module.exports = {
     getFeeStructures, createFeeStructure, updateFeeStructure, deleteFeeStructure,
     collectFee, getPayments, deletePayment, getStudentFeeDetails, getFeeSummary, getDefaulters,
     getUpiInfo, submitUpiPayment, getPendingUpiPayments, confirmUpiPayment, rejectUpiPayment,
-    getClassFeeStatus,
+    getClassFeeStatus, getDailyCollection,
 };
