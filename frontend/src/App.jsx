@@ -52,6 +52,7 @@ import FeeManagement from './pages/admin/FeeManagement';
 import BusManagement from './pages/admin/BusManagement';
 import TeacherFeeStatus from './pages/teacher/FeeStatus';
 import TransferCertificate from './pages/admin/TransferCertificate';
+import AdminTimetable from './pages/admin/Timetable';
 
 function App() {
   const { isAuthenticated, user, loading } = useAuth();
@@ -96,7 +97,7 @@ function App() {
         <Route path="teachers" element={<TeacherManagement />} />
         <Route path="classes" element={<ClassManagement />} />
         <Route path="subjects" element={<SubjectManagement />} />
-        <Route path="timetable" element={<div className="p-8 text-center text-gray-400 font-medium">Timetable Builder coming soon</div>} />
+        <Route path="timetable" element={<AdminTimetable />} />
         <Route path="assignments" element={<TeacherAssignments />} />
         <Route path="exams" element={<ExamManagement />} />
         <Route path="datesheet" element={<DatesheetBuilder />} />
