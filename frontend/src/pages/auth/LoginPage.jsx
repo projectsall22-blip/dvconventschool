@@ -4,9 +4,24 @@ import { useForm } from 'react-hook-form';
 import { ArrowLeft, Eye, EyeOff, Lock, User, Hash, Mail } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import API from '../../api/axios';
-import Input from '../../components/common/Input';
-import Button from '../../components/common/Button';
 import Toast from '../../components/common/Toast';
+
+/* ── Reusable field with left icon ── */
+const Field = ({ label, icon: Icon, error, rightEl, ...props }) => (
+  <div className="space-y-1.5">
+    <label className="block text-sm font-semibold text-gray-700">{label}</label>
+    <div className={`flex items-center gap-3 border rounded-xl px-4 h-14 bg-gray-50 transition-all
+      ${error ? 'border-red-400 bg-red-50' : 'border-gray-200 focus-within:border-indigo-400 focus-within:bg-white'}`}>
+      {Icon && <Icon size={18} className="text-gray-400 shrink-0" />}
+      <input
+        className="flex-1 bg-transparent outline-none text-sm text-gray-800 placeholder:text-gray-400 font-medium"
+        {...props}
+      />
+      {rightEl}
+    </div>
+    {error && <p className="text-xs text-red-500 font-medium">{error}</p>}
+  </div>
+);
 
 const LoginPage = () => {
   const { role } = useParams();
@@ -17,41 +32,39 @@ const LoginPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // 1. Role-Specific Configurations
   const roleConfig = {
     student: {
-      title: "Student Login",
-      identifierLabel: "UID",
-      identifierKey: "UID",
-      placeholder: "e.g. 2024001",
+      title: 'Student Login',
+      identifierLabel: 'UID',
+      identifierKey: 'UID',
+      placeholder: 'e.g. 2024001',
       icon: Hash,
-      inputMode: "numeric",
-      apiPath: "/auth/student-login"
+      inputMode: 'numeric',
+      apiPath: '/auth/student-login',
     },
     teacher: {
-      title: "Teacher Login",
-      identifierLabel: "Employee Code",
-      identifierKey: "employeeCode",
-      placeholder: "e.g. TCH102",
+      title: 'Teacher Login',
+      identifierLabel: 'Employee Code',
+      identifierKey: 'employeeCode',
+      placeholder: 'e.g. TCH102',
       icon: User,
-      inputMode: "text",
-      apiPath: "/auth/teacher-login"
+      inputMode: 'text',
+      apiPath: '/auth/teacher-login',
     },
     admin: {
-      title: "Admin Login",
-      identifierLabel: "Email or Username",
-      identifierKey: "email",
-      placeholder: "admin@dv.com",
+      title: 'Admin Login',
+      identifierLabel: 'Email or Username',
+      identifierKey: 'email',
+      placeholder: 'admin@dv.com',
       icon: Mail,
-      inputMode: "email",
-      apiPath: "/auth/admin-login"
-    }
+      inputMode: 'email',
+      apiPath: '/auth/admin-login',
+    },
   };
 
   const config = roleConfig[role] || roleConfig.student;
   const { register, handleSubmit, formState: { errors } } = useForm();
 
-  // 2. Submission Logic
   const onSubmit = async (data) => {
     setIsLoading(true);
     setError(null);
@@ -60,114 +73,98 @@ const LoginPage = () => {
       const { token, ...userData } = response.data;
       login(userData, token);
     } catch (err) {
-      const message = err.response?.data?.message || "Login failed. Please try again.";
-      setError(message);
+      setError(err.response?.data?.message || 'Login failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-white md:bg-background flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4"
+      style={{ background: '#eef2f7' }}>
 
-      {/* Toast for Errors */}
       {error && <Toast message={error} type="error" onClose={() => setError(null)} />}
 
-      <div className="w-full max-w-md bg-white rounded-3xl md:shadow-2xl md:border border-gray-100 overflow-hidden">
+      <div className="w-full max-w-sm bg-white rounded-3xl shadow-xl p-8 space-y-6">
 
-        {/* Header Section */}
-        <div className="p-8 pb-4">
-          <button
-            onClick={() => navigate('/')}
-            className="p-2 -ml-2 hover:bg-gray-50 rounded-full transition-colors text-secondary mb-6"
-          >
-            <ArrowLeft size={24} />
-          </button>
+        {/* Back */}
+        <button onClick={() => navigate('/')}
+          className="p-1.5 -ml-1 hover:bg-gray-100 rounded-full transition-colors text-gray-500">
+          <ArrowLeft size={22} />
+        </button>
 
-          <h1 className="text-2xl font-black text-gray-900 tracking-tight mb-2">
-            {config.title}
-          </h1>
-          <p className="text-secondary text-sm">
-            Enter your credentials to access your dashboard.
-          </p>
+        {/* Title */}
+        <div className="space-y-1">
+          <h1 className="text-2xl font-black text-gray-900">{config.title}</h1>
+          <p className="text-sm text-gray-500">Enter your credentials to access your dashboard.</p>
         </div>
 
-        {/* Form Section */}
-        <form onSubmit={handleSubmit(onSubmit)} className="p-8 pt-4 space-y-5">
+        {/* Form */}
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
 
-          <Input
+          <Field
             label={config.identifierLabel}
             icon={config.icon}
             placeholder={config.placeholder}
             inputMode={config.inputMode}
-            {...register(config.identifierKey, {
-              required: `${config.identifierLabel} is required`
-            })}
             error={errors[config.identifierKey]?.message}
+            {...register(config.identifierKey, {
+              required: `${config.identifierLabel} is required`,
+            })}
           />
 
-          <div className="relative">
-            <Input
-              label="Password"
-              type={showPassword ? "text" : "password"}
-              icon={Lock}
-              placeholder="••••••••"
-              {...register("password", {
-                required: "Password is required",
-                minLength: { value: 6, message: "Minimum 6 characters" }
-              })}
-              error={errors.password?.message}
-            />
-            {/* Show/Hide Toggle */}
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-4 top-[42px] text-gray-400 hover:text-primary transition-colors"
-            >
-              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-            </button>
-          </div>
+          <Field
+            label="Password"
+            icon={Lock}
+            type={showPassword ? 'text' : 'password'}
+            placeholder="••••••••"
+            error={errors.password?.message}
+            rightEl={
+              <button type="button" onClick={() => setShowPassword(p => !p)}
+                className="text-gray-400 hover:text-gray-600 transition-colors shrink-0">
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            }
+            {...register('password', {
+              required: 'Password is required',
+              minLength: { value: 6, message: 'Minimum 6 characters' },
+            })}
+          />
 
-          <div className="pt-2">
-            <Button
-              type="submit"
-              fullWidth
-              isLoading={isLoading}
-              variant="primary"
-            >
-              Login to System
-            </Button>
-          </div>
+          {/* Login Button */}
+          <button type="submit" disabled={isLoading}
+            className="w-full h-14 rounded-xl font-bold text-white text-base transition-all disabled:opacity-70 flex items-center justify-center gap-2"
+            style={{ background: 'linear-gradient(135deg, #4f46e5, #6366f1)' }}>
+            {isLoading
+              ? <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              : 'Login to System'}
+          </button>
 
-          <div className="text-center pt-4">
-            <button
-              type="button"
-              className="text-sm font-bold text-secondary hover:text-primary transition-colors"
-              onClick={() => alert("Please contact the school office to reset your password.")}
-            >
+          {/* Forgot Password */}
+          <div className="text-center pt-1">
+            <button type="button"
+              className="text-sm font-bold text-gray-700 hover:text-indigo-600 transition-colors"
+              onClick={() => alert('Please contact the school office to reset your password.')}>
               Forgot Password?
             </button>
           </div>
 
+          {/* Registration — student only */}
           {role === 'student' && (
-            <div className="mt-6 pt-6 border-t border-gray-100 text-center">
-              <p className="text-sm text-secondary mb-2">New to DV Convent?</p>
-              <button
-                type="button"
-                onClick={() => navigate('/register')}
-                className="text-sm font-black text-primary hover:underline"
-              >
+            <div className="pt-4 border-t border-gray-100 text-center space-y-1">
+              <p className="text-sm text-gray-500">New to DV Convent?</p>
+              <button type="button" onClick={() => navigate('/register')}
+                className="text-sm font-black text-indigo-600 hover:underline">
                 Registration
               </button>
             </div>
           )}
         </form>
 
-        <div className="p-8 pt-0 pb-10 text-center">
-          <p className="text-xs text-gray-400 font-medium">
-            Protected by DV Convent Security System
-          </p>
-        </div>
+        {/* Footer */}
+        <p className="text-center text-xs text-gray-400 font-medium pt-2">
+          Protected by DV Convent Security System
+        </p>
       </div>
     </div>
   );
