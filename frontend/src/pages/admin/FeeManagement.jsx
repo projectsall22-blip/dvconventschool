@@ -958,85 +958,124 @@ const FeeManagement = () => {
 
                     {/* ── Structures Tab */}
                     {tab === 'structures' && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {structures.map(s => (
-                                <div key={s._id} className="bg-white rounded-2xl border border-slate-100 shadow-card overflow-hidden hover:shadow-card-hover transition-shadow">
-                                    <div className="px-5 py-4 flex items-center justify-between border-b border-slate-50"
-                                        style={{ background: 'linear-gradient(to right, #f8faff, #eff6ff)' }}>
-                                        <div>
-                                            <h3 className="font-black text-primary text-lg">Class {s.className}</h3>
-                                            <div className="flex items-center gap-2 mt-0.5">
-                                                <span className="text-xs text-secondary">{s.academicYear}</span>
-                                                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${s.admissionType === 'new' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-primary'}`}>
-                                                    {s.admissionType === 'new' ? 'New' : 'Old'}
-                                                </span>
+                        <div className="space-y-6">
+                            {/* New Admission */}
+                            {['new','old'].map(type => {
+                                const filtered = structures.filter(s => s.admissionType === type);
+                                const isNew = type === 'new';
+                                return (
+                                    <div key={type}>
+                                        {/* Section Header */}
+                                        <div className={`flex items-center gap-3 mb-3 p-3 rounded-2xl ${isNew ? 'bg-emerald-50 border border-emerald-100' : 'bg-blue-50 border border-blue-100'}`}>
+                                            <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${isNew ? 'bg-emerald-500' : 'bg-blue-500'}`}>
+                                                <Users size={16} className="text-white" />
                                             </div>
+                                            <div>
+                                                <p className={`text-sm font-black uppercase tracking-wide ${isNew ? 'text-emerald-800' : 'text-blue-800'}`}>
+                                                    {isNew ? 'New Admission' : 'Old / Continuing Students'}
+                                                </p>
+                                                <p className="text-xs text-slate-500">{filtered.length} class{filtered.length !== 1 ? 'es' : ''} configured</p>
+                                            </div>
+                                            <button onClick={() => { setEditStructure(null); setShowStructure(true); }}
+                                                className={`ml-auto flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl transition-all ${isNew ? 'bg-emerald-500 hover:bg-emerald-600 text-white' : 'bg-blue-500 hover:bg-blue-600 text-white'}`}>
+                                                <Plus size={13} /> Add
+                                            </button>
                                         </div>
-                                        <div className="flex gap-1.5">
-                                            <button onClick={() => { setEditStructure(s); setShowStructure(true); }} className="w-8 h-8 rounded-xl bg-blue-50 hover:bg-blue-100 flex items-center justify-center text-primary transition-colors"><Settings2 size={14} /></button>
-                                            <button onClick={() => handleDeleteStructure(s._id)} className="w-8 h-8 rounded-xl bg-red-50 hover:bg-red-100 flex items-center justify-center text-danger transition-colors"><Trash2 size={14} /></button>
-                                        </div>
-                                    </div>
-                                    <div className="p-4 space-y-2">
-                                        {(() => {
-                                            const MONTHS_LIST = ['April','May','June','July','August','September','October','November','December','January','February','March'];
-                                            const hasMonthly = s.feeComponents.some(c => c.frequency === 'monthly');
-                                            const hasPerMonth = s.feeComponents.some(c => c.frequency === 'one-time' && c.dueMonth);
-                                            if (hasMonthly && !hasPerMonth) {
-                                                return s.feeComponents.map((c, i) => (
-                                                    <div key={i} className="flex justify-between text-sm">
-                                                        <span className="text-slate-600">{c.name} <span className="text-xs text-secondary">({c.frequency})</span></span>
-                                                        <span className="font-semibold text-slate-800">{fmt(c.amount)}</span>
-                                                    </div>
-                                                ));
-                                            }
-                                            const monthMap = {};
-                                            MONTHS_LIST.forEach(m => { monthMap[m] = { base: 0, extras: [] }; });
-                                            s.feeComponents.forEach(c => {
-                                                if (c.frequency === 'monthly') {
-                                                    MONTHS_LIST.forEach(m => { monthMap[m].base += c.amount; });
-                                                } else if (c.dueMonth && monthMap[c.dueMonth]) {
-                                                    if (c.name === 'Monthly Fee') monthMap[c.dueMonth].base += c.amount;
-                                                    else monthMap[c.dueMonth].extras.push({ name: c.name, amount: c.amount });
-                                                }
-                                            });
-                                            const activeMonths = MONTHS_LIST.filter(m => monthMap[m].base > 0 || monthMap[m].extras.length > 0);
-                                            const baseFees = activeMonths.map(m => monthMap[m].base);
-                                            const allSameBase = baseFees.length > 0 && baseFees.every(f => f === baseFees[0]);
-                                            return (
-                                                <>
-                                                    {allSameBase && baseFees[0] > 0 && (
-                                                        <div className="flex justify-between text-sm">
-                                                            <span className="text-slate-600">Monthly Fee <span className="text-xs text-secondary">(×{activeMonths.length} months)</span></span>
-                                                            <span className="font-semibold text-slate-800">{fmt(baseFees[0])}/mo</span>
-                                                        </div>
-                                                    )}
-                                                    {!allSameBase && activeMonths.map(m => (
-                                                        <div key={m} className="flex justify-between text-sm">
-                                                            <span className="text-slate-600">{m}</span>
-                                                            <span className="font-semibold text-slate-800">{fmt(monthMap[m].base)}</span>
-                                                        </div>
-                                                    ))}
-                                                    {MONTHS_LIST.filter(m => monthMap[m].extras.length > 0).map(m =>
-                                                        monthMap[m].extras.map((e, i) => (
-                                                            <div key={`${m}-${i}`} className="flex justify-between text-sm">
-                                                                <span className="text-violet-600">{e.name} <span className="text-xs text-violet-400">({m})</span></span>
-                                                                <span className="font-semibold text-violet-700">{fmt(e.amount)}</span>
+
+                                        {filtered.length === 0 ? (
+                                            <div className="bg-white rounded-2xl border border-dashed border-slate-200 flex flex-col items-center py-10 text-slate-400">
+                                                <Settings2 size={32} className="mb-2 opacity-30" />
+                                                <p className="text-sm font-semibold">No structures for {isNew ? 'new' : 'old'} students</p>
+                                            </div>
+                                        ) : (
+                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                                {filtered.map(s => {
+                                                    const MONTHS_LIST = ['April','May','June','July','August','September','October','November','December','January','February','March'];
+                                                    const monthMap = {};
+                                                    MONTHS_LIST.forEach(m => { monthMap[m] = { base: 0, extras: [] }; });
+                                                    s.feeComponents.forEach(c => {
+                                                        if (c.frequency === 'monthly') {
+                                                            MONTHS_LIST.forEach(m => { monthMap[m].base += c.amount; });
+                                                        } else if (c.dueMonth && monthMap[c.dueMonth]) {
+                                                            if (c.name === 'Monthly Fee') monthMap[c.dueMonth].base += c.amount;
+                                                            else monthMap[c.dueMonth].extras.push({ name: c.name, amount: c.amount });
+                                                        }
+                                                    });
+                                                    const activeMonths = MONTHS_LIST.filter(m => monthMap[m].base > 0 || monthMap[m].extras.length > 0);
+                                                    const baseFees = activeMonths.map(m => monthMap[m].base);
+                                                    const allSameBase = baseFees.length > 0 && baseFees.every(f => f === baseFees[0]);
+                                                    const extraFeeMonths = MONTHS_LIST.filter(m => monthMap[m].extras.length > 0);
+                                                    return (
+                                                        <div key={s._id} className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                                                            {/* Card Header */}
+                                                            <div className={`px-4 py-3 flex items-center justify-between ${isNew ? 'bg-gradient-to-r from-emerald-500 to-teal-500' : 'bg-gradient-to-r from-blue-600 to-indigo-600'}`}>
+                                                                <div>
+                                                                    <p className="text-white/70 text-[10px] font-bold uppercase tracking-widest">Class</p>
+                                                                    <p className="text-white text-2xl font-black leading-tight">{s.className}</p>
+                                                                </div>
+                                                                <div className="text-right">
+                                                                    <p className="text-white/70 text-[10px] font-bold uppercase tracking-widest">Annual Total</p>
+                                                                    <p className="text-white text-xl font-black">{fmt(s.totalAnnual)}</p>
+                                                                </div>
                                                             </div>
-                                                        ))
-                                                    )}
-                                                </>
-                                            );
-                                        })()}
-                                        <div className="pt-2 border-t border-slate-100 flex justify-between items-center">
-                                            <span className="text-sm font-bold text-slate-700">Annual Total</span>
-                                            <span className="font-black text-primary text-lg">{fmt(s.totalAnnual)}</span>
-                                        </div>
+
+                                                            {/* Fee Breakdown */}
+                                                            <div className="p-4 space-y-2">
+                                                                {allSameBase && baseFees[0] > 0 && (
+                                                                    <div className="flex items-center justify-between bg-slate-50 rounded-xl px-3 py-2">
+                                                                        <div>
+                                                                            <p className="text-xs font-bold text-slate-700">Monthly Fee</p>
+                                                                            <p className="text-[10px] text-slate-400">× {activeMonths.length} months</p>
+                                                                        </div>
+                                                                        <p className="font-black text-slate-800">{fmt(baseFees[0])}<span className="text-xs font-normal text-slate-400">/mo</span></p>
+                                                                    </div>
+                                                                )}
+                                                                {!allSameBase && activeMonths.length > 0 && (
+                                                                    <div className="bg-slate-50 rounded-xl p-3 space-y-1.5">
+                                                                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-2">Month-wise Fees</p>
+                                                                        {activeMonths.map(m => (
+                                                                            <div key={m} className="flex justify-between text-xs">
+                                                                                <span className="text-slate-600">{m}</span>
+                                                                                <span className="font-bold text-slate-800">{fmt(monthMap[m].base)}</span>
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                )}
+                                                                {extraFeeMonths.length > 0 && (
+                                                                    <div className="bg-violet-50 rounded-xl p-3 space-y-1.5">
+                                                                        <p className="text-[10px] font-bold text-violet-500 uppercase tracking-wide mb-2">Extra / One-time Fees</p>
+                                                                        {extraFeeMonths.map(m => monthMap[m].extras.map((e, i) => (
+                                                                            <div key={`${m}-${i}`} className="flex justify-between text-xs">
+                                                                                <span className="text-violet-700">{e.name} <span className="text-violet-400">({m})</span></span>
+                                                                                <span className="font-bold text-violet-800">{fmt(e.amount)}</span>
+                                                                            </div>
+                                                                        )))}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+
+                                                            {/* Actions */}
+                                                            <div className="px-4 pb-4 flex gap-2">
+                                                                <button onClick={() => { setEditStructure(s); setShowStructure(true); }}
+                                                                    className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors">
+                                                                    <Settings2 size={13} /> Edit
+                                                                </button>
+                                                                <button onClick={() => handleDeleteStructure(s._id)}
+                                                                    className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-red-50 hover:bg-red-100 text-danger text-xs font-bold transition-colors">
+                                                                    <Trash2 size={13} /> Delete
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
                                     </div>
-                                </div>
-                            ))}
+                                );
+                            })}
+
                             {structures.length === 0 && (
-                                <div className="col-span-3 bg-white rounded-2xl border border-slate-100 shadow-card flex flex-col items-center py-16 text-slate-400">
+                                <div className="bg-white rounded-2xl border border-dashed border-slate-200 flex flex-col items-center py-16 text-slate-400">
                                     <Settings2 size={40} className="mb-3 opacity-30" />
                                     <p className="font-semibold">No fee structures yet</p>
                                     <p className="text-sm mt-1">Click "Fee Structure" to create one</p>

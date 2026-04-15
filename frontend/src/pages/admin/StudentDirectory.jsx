@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Search, Filter, UserX, Edit3, Key, Eye, FileText, ShieldCheck, ChevronLeft, ChevronRight, User, Phone, Camera , MapPin, Calendar, CheckCircle } from 'lucide-react';
+import Cropper from 'react-easy-crop';
 import API from '../../api/axios';
 import Card from '../../components/common/Card';
 import Input from '../../components/common/Input';
@@ -8,6 +9,7 @@ import LoadingSpinner from '../../components/common/LoadingSpinner';
 import Toast from '../../components/common/Toast';
 import Modal from '../../components/common/Modal'; 
 import { generateStudentListPDF } from '../../utils/pdfGenerator';
+import { getCroppedImg } from '../../utils/cropImage';
 
 const StudentDirectory = () => {
   // ============ STATE MANAGEMENT ============
@@ -620,6 +622,15 @@ const ViewStudentModal = ({ isOpen, onClose, student, documentLabels }) => {
 const EditStudentModal = ({ isOpen, onClose, student, onSubmit, submitting }) => {
   const [imagePreview, setImagePreview] = React.useState(student?.profileImage || null);
 
+  // Crop states
+  const [rawImage, setRawImage] = React.useState(null);
+  const [isCropOpen, setIsCropOpen] = React.useState(false);
+  const [crop, setCrop] = React.useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = React.useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = React.useState(null);
+
+  const onCropComplete = useCallback((_, pixels) => setCroppedAreaPixels(pixels), []);
+
   React.useEffect(() => {
     setImagePreview(student?.profileImage || null);
   }, [student?._id]);
@@ -627,16 +638,65 @@ const EditStudentModal = ({ isOpen, onClose, student, onSubmit, submitting }) =>
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    if (file.size > 2000000) return alert("File too large. Max 2MB.");
+    if (file.size > 5000000) return alert("File too large. Max 5MB.");
     const reader = new FileReader();
-    reader.onloadend = () => setImagePreview(reader.result);
+    reader.onloadend = () => {
+      setRawImage(reader.result);
+      setZoom(1);
+      setCrop({ x: 0, y: 0 });
+      setIsCropOpen(true);
+    };
     reader.readAsDataURL(file);
+  };
+
+  const handleCropDone = async () => {
+    try {
+      const cropped = await getCroppedImg(rawImage, croppedAreaPixels);
+      setImagePreview(cropped);
+      setIsCropOpen(false);
+    } catch { alert('Crop failed, try again.'); }
   };
 
   if (!student) return null;
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Update Student Records">
+      {/* CROP MODAL */}
+      {isCropOpen && (
+        <div style={{position:'fixed',inset:0,zIndex:9999,background:'rgba(0,0,0,0.85)',display:'flex',alignItems:'center',justifyContent:'center',padding:'16px'}}>
+          <div style={{background:'white',borderRadius:'16px',padding:'20px',width:'100%',maxWidth:'420px',display:'flex',flexDirection:'column',gap:'16px'}}>
+            <p className="text-sm font-black text-gray-800 text-center">Crop Photo</p>
+            <div style={{position:'relative',height:'300px',background:'#111',borderRadius:'12px',overflow:'hidden'}}>
+              <Cropper
+                image={rawImage}
+                crop={crop}
+                zoom={zoom}
+                aspect={3/4}
+                onCropChange={setCrop}
+                onZoomChange={setZoom}
+                onCropComplete={onCropComplete}
+              />
+            </div>
+            <div className="space-y-1">
+              <p className="text-[10px] font-bold text-gray-400 uppercase">Zoom</p>
+              <input type="range" min={1} max={3} step={0.05} value={zoom}
+                onChange={e => setZoom(Number(e.target.value))}
+                className="w-full accent-indigo-600" />
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => setIsCropOpen(false)}
+                className="flex-1 h-10 rounded-xl border-2 border-gray-200 text-sm font-bold text-gray-600 hover:border-gray-300 transition-all">
+                Cancel
+              </button>
+              <button onClick={handleCropDone}
+                className="flex-1 h-10 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 transition-all">
+                Apply Crop
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <form onSubmit={(e) => {
         e._imagePreview = imagePreview;
         onSubmit(e);

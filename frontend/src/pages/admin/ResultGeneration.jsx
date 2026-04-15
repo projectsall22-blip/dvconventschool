@@ -54,7 +54,7 @@ const TermMarksheet = ({ student, termKey, termLabel, schoolInfo, academicYear }
   const overallGrade = gradeFromPercent(pctNum);
   const coScholastic = student.coScholastic || {};
   const attendance   = student.attendance   || {};
-  const remark = student.teacherRemark || 'Has done well.';
+  const remark = student.teacherRemark || 'Keep up the good work and strive for excellence.';
   const passed = pctNum >= PASS_MARK;
   const nextClass = getNextClass(student.class, passed);
   const resultQualified = passed ? `QUALIFIED FOR ADMISSION TO CLASS - ${nextClass}` : `NOT PROMOTED -- DETAINED IN CLASS - ${student.class||''}`;
@@ -115,46 +115,46 @@ const TermMarksheet = ({ student, termKey, termLabel, schoolInfo, academicYear }
               <tbody>
                 <tr>
                   <td style={{fontSize:'11px',paddingBottom:'4px',width:'52%'}}>
-                    <span style={{color:'#6b7280',fontSize:'10px',fontWeight:'700',textTransform:'uppercase',letterSpacing:'0.5px'}}>Admission No.</span><br/>
+                    <span style={{color:'#6b7280',fontSize:'9px',fontWeight:'700',textTransform:'uppercase',letterSpacing:'0.5px'}}>Admission No.</span><br/>
                     <b style={{fontSize:'12px',color:'#111827'}}>{student.admissionNo||student.UID||'--'}</b>
                   </td>
                   <td style={{fontSize:'11px',paddingBottom:'4px'}}>
-                    <span style={{color:'#6b7280',fontSize:'10px',fontWeight:'700',textTransform:'uppercase',letterSpacing:'0.5px'}}>Class &amp; Sec.</span><br/>
+                    <span style={{color:'#6b7280',fontSize:'9px',fontWeight:'700',textTransform:'uppercase',letterSpacing:'0.5px'}}>Class &amp; Section</span><br/>
                     <b style={{fontSize:'12px',color:'#111827'}}>{student.class||'--'}</b>
                   </td>
                 </tr>
                 <tr>
-                  <td style={{fontSize:'11px',paddingBottom:'4px'}} colSpan={2}>
-                    <span style={{color:'#6b7280',fontSize:'10px',fontWeight:'700',textTransform:'uppercase',letterSpacing:'0.5px'}}>Student Name</span><br/>
-                    <b style={{fontSize:'14px',color:BLUE}}>{student.name}</b>
+                  <td style={{paddingBottom:'4px'}} colSpan={2}>
+                    <span style={{color:'#6b7280',fontSize:'9px',fontWeight:'700',textTransform:'uppercase',letterSpacing:'0.5px'}}>Student Name</span><br/>
+                    <b style={{fontSize:'15px',color:BLUE,letterSpacing:'0.3px'}}>{student.name}</b>
                   </td>
                 </tr>
                 <tr>
-                  <td style={{fontSize:'11px',paddingBottom:'3px'}}>
-                    <span style={{color:'#6b7280',fontSize:'10px'}}>Mother&apos;s Name</span><br/>
-                    <span style={{fontSize:'11.5px'}}>{student.motherName||'--'}</span>
+                  <td style={{paddingBottom:'3px'}}>
+                    <span style={{color:'#6b7280',fontSize:'9px',fontWeight:'700',textTransform:'uppercase'}}>Father&apos;s Name</span><br/>
+                    <span style={{fontSize:'11px',fontWeight:'600'}}>{student.fatherName||'--'}</span>
                   </td>
-                  <td style={{fontSize:'11px',paddingBottom:'3px'}}>
-                    <span style={{color:'#6b7280',fontSize:'10px'}}>Date of Birth</span><br/>
-                    <span style={{fontSize:'11.5px'}}>{student.dob?fmt(student.dob):'--'}</span>
+                  <td style={{paddingBottom:'3px'}}>
+                    <span style={{color:'#6b7280',fontSize:'9px',fontWeight:'700',textTransform:'uppercase'}}>Mother&apos;s Name</span><br/>
+                    <span style={{fontSize:'11px',fontWeight:'600'}}>{student.motherName||'--'}</span>
                   </td>
                 </tr>
                 <tr>
-                  <td style={{fontSize:'11px',paddingBottom:'3px'}}>
-                    <span style={{color:'#6b7280',fontSize:'10px'}}>Father&apos;s Name</span><br/>
-                    <span style={{fontSize:'11.5px'}}>{student.fatherName||'--'}</span>
+                  <td>
+                    <span style={{color:'#6b7280',fontSize:'9px',fontWeight:'700',textTransform:'uppercase'}}>Date of Birth</span><br/>
+                    <span style={{fontSize:'11px',fontWeight:'600'}}>{student.dob?fmt(student.dob):'--'}</span>
                   </td>
-                  <td style={{fontSize:'11px'}}>
-                    <span style={{color:'#6b7280',fontSize:'10px'}}>Address</span><br/>
-                    <span style={{fontSize:'11px'}}>{student.address||'--'}</span>
+                  <td>
+                    <span style={{color:'#6b7280',fontSize:'9px',fontWeight:'700',textTransform:'uppercase'}}>Address</span><br/>
+                    <span style={{fontSize:'10.5px'}}>{student.address||'--'}</span>
                   </td>
                 </tr>
               </tbody>
             </table>
           </div>
-          <div style={{width:'80px',flexShrink:0,borderLeft:`1.5px solid ${BLUE}`,display:'flex',alignItems:'center',justifyContent:'center',background:'#f0f4fb',padding:'8px'}}>
-            <div style={{width:'62px',height:'76px',border:`2px solid ${BLUE}`,borderRadius:'3px',overflow:'hidden',display:'flex',alignItems:'center',justifyContent:'center',background:'#e5e7eb',boxShadow:'0 2px 6px rgba(0,0,0,0.15)'}}>
-              {photoSrc?<img src={photoSrc} alt={student.name} style={{width:'100%',height:'100%',objectFit:'cover'}} />:<User size={26} color="#9ca3af" />}
+          <div style={{width:'106px',flexShrink:0,borderLeft:`1.5px solid ${BLUE}`,display:'flex',alignItems:'center',justifyContent:'center',background:'#f0f4fb',padding:'8px'}}>
+            <div style={{width:'88px',height:'110px',border:`2px solid ${BLUE}`,borderRadius:'3px',overflow:'hidden',display:'flex',alignItems:'center',justifyContent:'center',background:'#e5e7eb',boxShadow:'0 2px 6px rgba(0,0,0,0.15)'}}>
+              {photoSrc?<img src={photoSrc} alt={student.name} style={{width:'100%',height:'100%',objectFit:'cover'}} />:<User size={30} color="#9ca3af" />}
             </div>
           </div>
         </div>
@@ -240,32 +240,57 @@ const TermMarksheet = ({ student, termKey, termLabel, schoolInfo, academicYear }
             </tr>
           </tbody>
         </table>
+        {/* Attendance */}
         <div style={{display:'flex',gap:'6px',marginBottom:'5px'}}>
-          <div style={{flex:1,display:'flex',alignItems:'center',gap:'10px',background:BLUE_LIGHT,border:`1.5px solid #93afd4`,borderRadius:'4px',padding:'6px 12px'}}>
-            <span style={{fontSize:'11px',fontWeight:'800',color:BLUE,textTransform:'uppercase',letterSpacing:'0.5px',flexShrink:0}}>Attendance</span>
-            <span style={{fontSize:'10px',color:'#6b7280'}}>Present:</span>
-            <span style={{fontSize:'14px',fontWeight:'900',color:BLUE,minWidth:'24px',textAlign:'center'}}>{attendance.presentDays??'--'}</span>
-            <span style={{fontSize:'10px',color:'#d1d5db'}}>|</span>
-            <span style={{fontSize:'10px',color:'#6b7280'}}>Total Days:</span>
-            <span style={{fontSize:'14px',fontWeight:'900',color:BLUE,minWidth:'24px',textAlign:'center'}}>{attendance.totalWorkingDays??'--'}</span>
-            <span style={{fontSize:'10px',color:'#d1d5db'}}>|</span>
-            <span style={{fontSize:'10px',color:'#6b7280'}}>Percentage:</span>
-            <span style={{fontSize:'14px',fontWeight:'900',minWidth:'40px',textAlign:'center',color:attendance.presentDays&&attendance.totalWorkingDays?((attendance.presentDays/attendance.totalWorkingDays)*100)>=75?'#15803d':'#dc2626':BLUE}}>
-              {attendance.presentDays&&attendance.totalWorkingDays?`${((attendance.presentDays/attendance.totalWorkingDays)*100).toFixed(1)}%`:'--'}
-            </span>
+          <div style={{flex:1,display:'grid',gridTemplateColumns:'auto 1fr 1fr 1fr',alignItems:'center',gap:'0',background:BLUE_LIGHT,border:`1.5px solid #93afd4`,borderRadius:'6px',overflow:'hidden'}}>
+            <div style={{background:BLUE,padding:'4px 8px',display:'flex',alignItems:'center',gap:'5px'}}>
+              <span style={{fontSize:'9px',fontWeight:'900',color:'white',textTransform:'uppercase',letterSpacing:'0.8px'}}>Attendance</span>
+            </div>
+            {[
+              ['Present', attendance.presentDays??'--'],
+              ['Total Days', attendance.totalWorkingDays??'--'],
+              ['Percentage', attendance.presentDays&&attendance.totalWorkingDays?`${((attendance.presentDays/attendance.totalWorkingDays)*100).toFixed(1)}%`:'--'],
+            ].map(([label, value], i) => {
+              const isLow = label==='Percentage'&&attendance.presentDays&&attendance.totalWorkingDays&&((attendance.presentDays/attendance.totalWorkingDays)*100)<75;
+              return (
+                <div key={label} style={{padding:'3px 8px',borderLeft:`1px solid #c7d2e8`,textAlign:'center'}}>
+                  <div style={{fontSize:'8px',color:'#6b7280',fontWeight:'700',textTransform:'uppercase',letterSpacing:'0.4px'}}>{label}</div>
+                  <div style={{fontSize:'11px',fontWeight:'900',color:label==='Percentage'?(isLow?'#dc2626':'#15803d'):BLUE,marginTop:'1px'}}>{value}</div>
+                </div>
+              );
+            })}
           </div>
         </div>
-        <div style={{border:`1.5px solid #c7d2e8`,borderRadius:'4px',padding:'6px 12px',marginBottom:'8px',background:'#fffbeb',borderLeft:`3px solid #f59e0b`}}>
-          <span style={{fontSize:'11px',fontWeight:'800',color:'#b45309',textTransform:'uppercase',letterSpacing:'0.5px'}}>Class Teacher&apos;s Remark: </span>
-          <span style={{fontSize:'11px',color:'#374151'}}>{remark}</span>
-        </div>
-        <div style={{background:pctNum>=33?'linear-gradient(135deg,#f0fdf4 0%,#dcfce7 100%)':'#fef2f2',border:`1.5px solid ${pctNum>=33?'#86efac':'#fca5a5'}`,borderRadius:'4px',padding:'6px 14px',marginBottom:'0',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-          <div>
-            <div style={{fontSize:'12px',fontWeight:'800',color:pctNum>=33?'#166534':'#991b1b'}}>{resultQualified}</div>
-            <div style={{fontSize:'11px',color:'#6b7280',marginTop:'2px'}}>Place: {schoolInfo.schoolAddress||'--'} &nbsp;|&nbsp; Date: {today}</div>
+        {/* Remark */}
+        <div style={{display:'flex',alignItems:'stretch',marginBottom:'4px',borderRadius:'6px',overflow:'hidden',border:`1.5px solid #fcd34d`}}>
+          <div style={{background:'linear-gradient(135deg,#f59e0b,#d97706)',padding:'4px 8px',display:'flex',alignItems:'center',writingMode:'horizontal-tb',flexShrink:0}}>
+            <span style={{fontSize:'8px',fontWeight:'900',color:'white',textTransform:'uppercase',letterSpacing:'0.8px',whiteSpace:'nowrap'}}>Teacher&apos;s Remark</span>
           </div>
-          <div style={{fontSize:'17px',fontWeight:'900',letterSpacing:'2px',color:pctNum>=33?'#166534':'#991b1b',border:`2px solid ${pctNum>=33?'#86efac':'#fca5a5'}`,padding:'4px 16px',borderRadius:'4px',background:'white'}}>
-            {pctNum>=33?'PASS':'FAIL'}
+          <div style={{background:'#fffbeb',padding:'4px 10px',display:'flex',alignItems:'center',flex:1}}>
+            <span style={{fontSize:'10px',color:'#374151',fontStyle:'italic'}}>"{remark}"</span>
+          </div>
+        </div>
+        {/* Result */}
+        <div style={{borderRadius:'6px',overflow:'hidden',border:`1.5px solid ${pctNum>=33?'#86efac':'#fca5a5'}`,marginBottom:'0'}}>
+          <div style={{background:pctNum>=33?'linear-gradient(135deg,#166534,#15803d)':'linear-gradient(135deg,#991b1b,#dc2626)',padding:'3px 12px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+            <span style={{fontSize:'9px',fontWeight:'900',color:'rgba(255,255,255,0.8)',textTransform:'uppercase',letterSpacing:'1px'}}>Result</span>
+            <span style={{fontSize:'9px',fontWeight:'700',color:'rgba(255,255,255,0.6)'}}>Session {academicYear}</span>
+          </div>
+          <div style={{background:pctNum>=33?'linear-gradient(135deg,#f0fdf4,#dcfce7)':'#fef2f2',padding:'5px 12px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+            <div>
+              <div style={{fontSize:'11px',fontWeight:'800',color:pctNum>=33?'#166534':'#991b1b'}}>{resultQualified}</div>
+              <div style={{fontSize:'9px',color:'#6b7280',marginTop:'1px'}}>Place: {schoolInfo.schoolAddress||'--'} &nbsp;|&nbsp; Date: {today}</div>
+            </div>
+            <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:'2px'}}>
+              <div style={{fontSize:'14px',fontWeight:'900',letterSpacing:'2px',color:pctNum>=33?'#166534':'#991b1b',border:`2px solid ${pctNum>=33?'#86efac':'#fca5a5'}`,padding:'2px 12px',borderRadius:'4px',background:'white',lineHeight:1.2}}>
+                {pctNum>=33?'PASS':'FAIL'}
+              </div>
+              {pctNum>=33 && (
+                <div style={{fontSize:'8px',fontWeight:'900',letterSpacing:'1px',color:'white',background:pctNum>=65?'#1d4ed8':pctNum>=45?'#15803d':'#d97706',padding:'2px 7px',borderRadius:'3px',textTransform:'uppercase'}}>
+                  {pctNum>=65?'First Div.':pctNum>=45?'Second Div.':'Third Div.'}
+                </div>
+              )}
+            </div>
           </div>
         </div>
         <div style={{flex:'1 1 0px',minHeight:subCount>8?'2mm':'4mm',maxHeight:subCount>8?'8mm':'18mm'}} />
@@ -318,7 +343,7 @@ const CombinedMarksheet = ({ student, schoolInfo, academicYear }) => {
   const overallGrade  = gradeFromPercent(pctNum);
   const coScholastic = student.coScholastic || {};
   const attendance   = student.attendance   || {};
-  const remark = student.teacherRemark || 'Has done well.';
+  const remark = student.teacherRemark || 'Keep up the good work and strive for excellence.';
   const passed = pctNum >= PASS_MARK;
   const nextClass = getNextClass(student.class, passed);
   const resultQualified = passed?`QUALIFIED FOR ADMISSION TO CLASS - ${nextClass}`:`NOT PROMOTED -- DETAINED IN CLASS - ${student.class||''}`;
@@ -369,42 +394,51 @@ const CombinedMarksheet = ({ student, schoolInfo, academicYear }) => {
           ANNUAL RESULT -- SESSION {academicYear}
         </div>
         <div style={{display:'flex',marginBottom:'8px',border:`1.5px solid ${BLUE}`,borderRadius:'4px',overflow:'hidden'}}>
-          <div style={{flex:1,padding:'7px 10px',background:BLUE_LIGHT}}>
+          <div style={{flex:1,padding:'8px 12px',background:BLUE_LIGHT}}>
             <table style={{width:'100%',borderCollapse:'collapse'}}>
               <tbody>
                 <tr>
-                  <td style={{fontSize:'14.5px',paddingBottom:'3px',width:'52%'}}>
-                    <span style={{color:'#6b7280',fontSize:'13.5px',fontWeight:'700',textTransform:'uppercase'}}>Admission No.</span><br/>
-                    <b style={{fontSize:'15.5px',color:'#111827'}}>{student.admissionNo||student.UID||'--'}</b>
+                  <td style={{fontSize:'11px',paddingBottom:'4px',width:'52%'}}>
+                    <span style={{color:'#6b7280',fontSize:'9px',fontWeight:'700',textTransform:'uppercase',letterSpacing:'0.5px'}}>Admission No.</span><br/>
+                    <b style={{fontSize:'12px',color:'#111827'}}>{student.admissionNo||student.UID||'--'}</b>
                   </td>
-                  <td style={{fontSize:'14.5px',paddingBottom:'3px'}}>
-                    <span style={{color:'#6b7280',fontSize:'13.5px',fontWeight:'700',textTransform:'uppercase'}}>Class &amp; Sec.</span><br/>
-                    <b style={{fontSize:'15.5px',color:'#111827'}}>{student.class||'--'}</b>
-                  </td>
-                </tr>
-                <tr>
-                  <td colSpan={2} style={{fontSize:'14.5px',paddingBottom:'3px'}}>
-                    <span style={{color:'#6b7280',fontSize:'13.5px',fontWeight:'700',textTransform:'uppercase'}}>Student Name</span><br/>
-                    <b style={{fontSize:'17px',color:BLUE}}>{student.name}</b>
+                  <td style={{fontSize:'11px',paddingBottom:'4px'}}>
+                    <span style={{color:'#6b7280',fontSize:'9px',fontWeight:'700',textTransform:'uppercase',letterSpacing:'0.5px'}}>Class &amp; Section</span><br/>
+                    <b style={{fontSize:'12px',color:'#111827'}}>{student.class||'--'}</b>
                   </td>
                 </tr>
                 <tr>
-                  <td style={{fontSize:'14.5px',paddingBottom:'2px'}}><span style={{color:'#6b7280',fontSize:'13.5px'}}>Mother&apos;s Name: </span><span>{student.motherName||'--'}</span></td>
-                  <td style={{fontSize:'14.5px'}}><span style={{color:'#6b7280',fontSize:'13.5px'}}>Father&apos;s Name: </span><span>{student.fatherName||'--'}</span></td>
+                  <td style={{paddingBottom:'4px'}} colSpan={2}>
+                    <span style={{color:'#6b7280',fontSize:'9px',fontWeight:'700',textTransform:'uppercase',letterSpacing:'0.5px'}}>Student Name</span><br/>
+                    <b style={{fontSize:'15px',color:BLUE,letterSpacing:'0.3px'}}>{student.name}</b>
+                  </td>
                 </tr>
                 <tr>
-                  <td colSpan={2} style={{fontSize:'14px'}}>
-                    <span style={{color:'#6b7280',fontSize:'13.5px'}}>DOB: </span><span>{student.dob?fmt(student.dob):'--'}</span>
-                    &nbsp;&nbsp;&nbsp;
-                    <span style={{color:'#6b7280',fontSize:'13.5px'}}>Address: </span><span>{student.address||'--'}</span>
+                  <td style={{paddingBottom:'3px'}}>
+                    <span style={{color:'#6b7280',fontSize:'9px',fontWeight:'700',textTransform:'uppercase'}}>Father&apos;s Name</span><br/>
+                    <span style={{fontSize:'11px',fontWeight:'600'}}>{student.fatherName||'--'}</span>
+                  </td>
+                  <td style={{paddingBottom:'3px'}}>
+                    <span style={{color:'#6b7280',fontSize:'9px',fontWeight:'700',textTransform:'uppercase'}}>Mother&apos;s Name</span><br/>
+                    <span style={{fontSize:'11px',fontWeight:'600'}}>{student.motherName||'--'}</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <span style={{color:'#6b7280',fontSize:'9px',fontWeight:'700',textTransform:'uppercase'}}>Date of Birth</span><br/>
+                    <span style={{fontSize:'11px',fontWeight:'600'}}>{student.dob?fmt(student.dob):'--'}</span>
+                  </td>
+                  <td>
+                    <span style={{color:'#6b7280',fontSize:'9px',fontWeight:'700',textTransform:'uppercase'}}>Address</span><br/>
+                    <span style={{fontSize:'10.5px'}}>{student.address||'--'}</span>
                   </td>
                 </tr>
               </tbody>
             </table>
           </div>
-          <div style={{width:'72px',flexShrink:0,borderLeft:`1.5px solid ${BLUE}`,display:'flex',alignItems:'center',justifyContent:'center',background:'#f0f4fb',padding:'6px'}}>
-            <div style={{width:'56px',height:'68px',border:`2px solid ${BLUE}`,borderRadius:'3px',overflow:'hidden',display:'flex',alignItems:'center',justifyContent:'center',background:'#e5e7eb',boxShadow:'0 2px 6px rgba(0,0,0,0.15)'}}>
-              {photoSrc?<img src={photoSrc} alt={student.name} style={{width:'100%',height:'100%',objectFit:'cover'}} />:<User size={22} color="#9ca3af" />}
+          <div style={{width:'106px',flexShrink:0,borderLeft:`1.5px solid ${BLUE}`,display:'flex',alignItems:'center',justifyContent:'center',background:'#f0f4fb',padding:'8px'}}>
+            <div style={{width:'88px',height:'110px',border:`2px solid ${BLUE}`,borderRadius:'3px',overflow:'hidden',display:'flex',alignItems:'center',justifyContent:'center',background:'#e5e7eb',boxShadow:'0 2px 6px rgba(0,0,0,0.15)'}}>
+              {photoSrc?<img src={photoSrc} alt={student.name} style={{width:'100%',height:'100%',objectFit:'cover'}} />:<User size={30} color="#9ca3af" />}
             </div>
           </div>
         </div>
@@ -480,52 +514,77 @@ const CombinedMarksheet = ({ student, schoolInfo, academicYear }) => {
         <table style={{width:'100%',borderCollapse:'collapse',marginBottom:'5px',boxShadow:'0 1px 3px rgba(0,0,0,0.06)'}}>
           <thead>
             <tr>
-              <th style={{border:`1px solid ${BLUE}`,padding:'3px 7px',fontSize:'14.5px',fontWeight:'800',background:BLUE,color:'white',textAlign:'left'}}>Activity</th>
-              <th style={{border:`1px solid ${BLUE}`,padding:'3px 7px',fontSize:'14.5px',fontWeight:'800',background:'#1e3575',color:'white',textAlign:'center',width:'55px'}}>Term-1</th>
-              <th style={{border:`1px solid ${BLUE}`,padding:'3px 7px',fontSize:'14.5px',fontWeight:'800',background:'#78350f',color:'white',textAlign:'center',width:'55px'}}>Term-2</th>
+              <th style={{border:`1px solid ${BLUE}`,padding:'5px 10px',fontSize:'11px',fontWeight:'800',background:BLUE,color:'white',textAlign:'left',letterSpacing:'0.3px'}}>Activity</th>
+              <th style={{border:`1px solid ${BLUE}`,padding:'5px 0',fontSize:'11px',fontWeight:'800',background:'#1e3575',color:'white',textAlign:'center',width:'80px'}}>Term-1</th>
+              <th style={{border:`1px solid ${BLUE}`,padding:'5px 0',fontSize:'11px',fontWeight:'800',background:'#78350f',color:'white',textAlign:'center',width:'80px'}}>Term-2</th>
             </tr>
           </thead>
           <tbody>
             {[['Work Education','workEducation'],['Art Education','artEducation'],['Health & Physical Education','healthPhysical']].map(([lbl,key],idx) => (
               <tr key={key} style={{background:idx%2===0?'#f8faff':'#fff'}}>
-                <td style={{border:'1px solid #c7d2e8',padding:'3px 7px',fontSize:'14.5px',borderLeft:`3px solid #6d28d9`}}>{lbl}</td>
-                <td style={{border:'1px solid #c7d2e8',padding:'2px',textAlign:'center',fontSize:'15.5px',fontWeight:'900',color:'#15803d',background:'#f0fdf4'}}>{coScholastic[key]?.term1||'A'}</td>
-                <td style={{border:'1px solid #c7d2e8',padding:'2px',textAlign:'center',fontSize:'15.5px',fontWeight:'900',color:'#15803d',background:'#f0fdf4'}}>{coScholastic[key]?.term2||'A'}</td>
+                <td style={{border:'1px solid #c7d2e8',padding:'5px 10px',fontSize:'11px',borderLeft:`3px solid #6d28d9`,fontWeight:'600',color:'#374151'}}>{lbl}</td>
+                <td style={{border:'1px solid #c7d2e8',padding:'4px',textAlign:'center',fontSize:'13px',fontWeight:'900',color:'#15803d',background:'#f0fdf4'}}>{coScholastic[key]?.term1||'A'}</td>
+                <td style={{border:'1px solid #c7d2e8',padding:'4px',textAlign:'center',fontSize:'13px',fontWeight:'900',color:'#15803d',background:'#f0fdf4'}}>{coScholastic[key]?.term2||'A'}</td>
               </tr>
             ))}
             <tr style={{background:'#f8faff'}}>
-              <td style={{border:'1px solid #c7d2e8',padding:'3px 7px',fontSize:'14.5px',borderLeft:`3px solid #6d28d9`}}>Discipline</td>
-              <td style={{border:'1px solid #c7d2e8',padding:'2px',textAlign:'center',fontSize:'15.5px',fontWeight:'900',color:'#15803d',background:'#f0fdf4'}}>{coScholastic.discipline?.term1||'A'}</td>
-              <td style={{border:'1px solid #c7d2e8',padding:'2px',textAlign:'center',fontSize:'15.5px',fontWeight:'900',color:'#15803d',background:'#f0fdf4'}}>{coScholastic.discipline?.term2||'A'}</td>
+              <td style={{border:'1px solid #c7d2e8',padding:'5px 10px',fontSize:'11px',borderLeft:`3px solid #6d28d9`,fontWeight:'600',color:'#374151'}}>Discipline</td>
+              <td style={{border:'1px solid #c7d2e8',padding:'4px',textAlign:'center',fontSize:'13px',fontWeight:'900',color:'#15803d',background:'#f0fdf4'}}>{coScholastic.discipline?.term1||'A'}</td>
+              <td style={{border:'1px solid #c7d2e8',padding:'4px',textAlign:'center',fontSize:'13px',fontWeight:'900',color:'#15803d',background:'#f0fdf4'}}>{coScholastic.discipline?.term2||'A'}</td>
             </tr>
           </tbody>
         </table>
+        {/* Attendance */}
         <div style={{display:'flex',gap:'6px',marginBottom:'4px'}}>
-          <div style={{flex:1,display:'flex',alignItems:'center',gap:'10px',background:BLUE_LIGHT,border:`1.5px solid #93afd4`,borderRadius:'4px',padding:'5px 10px'}}>
-            <span style={{fontSize:'14px',fontWeight:'800',color:BLUE,textTransform:'uppercase',letterSpacing:'0.5px',flexShrink:0}}>Attendance</span>
-            <span style={{fontSize:'14px',color:'#6b7280'}}>Present:</span>
-            <span style={{fontSize:'17px',fontWeight:'900',color:BLUE,minWidth:'22px',textAlign:'center'}}>{attendance.presentDays??'--'}</span>
-            <span style={{fontSize:'14px',color:'#d1d5db'}}>|</span>
-            <span style={{fontSize:'14px',color:'#6b7280'}}>Total Days:</span>
-            <span style={{fontSize:'17px',fontWeight:'900',color:BLUE,minWidth:'22px',textAlign:'center'}}>{attendance.totalWorkingDays??'--'}</span>
-            <span style={{fontSize:'14px',color:'#d1d5db'}}>|</span>
-            <span style={{fontSize:'14px',color:'#6b7280'}}>Percentage:</span>
-            <span style={{fontSize:'17px',fontWeight:'900',minWidth:'38px',textAlign:'center',color:attendance.presentDays&&attendance.totalWorkingDays?((attendance.presentDays/attendance.totalWorkingDays)*100)>=75?'#15803d':'#dc2626':BLUE}}>
-              {attendance.presentDays&&attendance.totalWorkingDays?`${((attendance.presentDays/attendance.totalWorkingDays)*100).toFixed(1)}%`:'--'}
-            </span>
+          <div style={{flex:1,display:'grid',gridTemplateColumns:'auto 1fr 1fr 1fr',alignItems:'center',gap:'0',background:BLUE_LIGHT,border:`1.5px solid #93afd4`,borderRadius:'6px',overflow:'hidden'}}>
+            <div style={{background:BLUE,padding:'4px 8px',display:'flex',alignItems:'center'}}>
+              <span style={{fontSize:'9px',fontWeight:'900',color:'white',textTransform:'uppercase',letterSpacing:'0.8px'}}>Attendance</span>
+            </div>
+            {[
+              ['Present', attendance.presentDays??'--'],
+              ['Total Days', attendance.totalWorkingDays??'--'],
+              ['Percentage', attendance.presentDays&&attendance.totalWorkingDays?`${((attendance.presentDays/attendance.totalWorkingDays)*100).toFixed(1)}%`:'--'],
+            ].map(([label, value]) => {
+              const isLow = label==='Percentage'&&attendance.presentDays&&attendance.totalWorkingDays&&((attendance.presentDays/attendance.totalWorkingDays)*100)<75;
+              return (
+                <div key={label} style={{padding:'3px 8px',borderLeft:`1px solid #c7d2e8`,textAlign:'center'}}>
+                  <div style={{fontSize:'8px',color:'#6b7280',fontWeight:'700',textTransform:'uppercase',letterSpacing:'0.4px'}}>{label}</div>
+                  <div style={{fontSize:'11px',fontWeight:'900',color:label==='Percentage'?(isLow?'#dc2626':'#15803d'):BLUE,marginTop:'1px'}}>{value}</div>
+                </div>
+              );
+            })}
           </div>
         </div>
-        <div style={{border:`1.5px solid #c7d2e8`,borderRadius:'4px',padding:'5px 10px',marginBottom:'0px',background:'#fffbeb',borderLeft:`3px solid #f59e0b`}}>
-          <span style={{fontSize:'14px',fontWeight:'800',color:'#b45309',textTransform:'uppercase',letterSpacing:'0.5px'}}>Class Teacher&apos;s Remark: </span>
-          <span style={{fontSize:'14.5px',color:'#374151'}}>{remark}</span>
-        </div>
-        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',background:pctNum>=33?'linear-gradient(135deg,#f0fdf4,#dcfce7)':'#fef2f2',border:`1.5px solid ${pctNum>=33?'#86efac':'#fca5a5'}`,borderRadius:'4px',padding:'5px 12px',marginTop:'5px',marginBottom:'0'}}>
-          <div>
-            <div style={{fontSize:'15px',fontWeight:'800',color:pctNum>=33?'#166534':'#991b1b'}}>{resultQualified}</div>
-            <div style={{fontSize:'14px',color:'#6b7280',marginTop:'1px'}}>Place: {schoolInfo.schoolAddress||'--'} &nbsp;|&nbsp; Date: {today}</div>
+        {/* Remark */}
+        <div style={{display:'flex',alignItems:'stretch',marginBottom:'4px',borderRadius:'6px',overflow:'hidden',border:`1.5px solid #fcd34d`}}>
+          <div style={{background:'linear-gradient(135deg,#f59e0b,#d97706)',padding:'4px 8px',display:'flex',alignItems:'center',flexShrink:0}}>
+            <span style={{fontSize:'8px',fontWeight:'900',color:'white',textTransform:'uppercase',letterSpacing:'0.8px',whiteSpace:'nowrap'}}>Teacher&apos;s Remark</span>
           </div>
-          <div style={{fontSize:'20px',fontWeight:'900',letterSpacing:'2px',color:pctNum>=33?'#166534':'#991b1b',border:`2px solid ${pctNum>=33?'#86efac':'#fca5a5'}`,padding:'3px 14px',borderRadius:'4px',background:'white'}}>
-            {pctNum>=33?'PASS':'FAIL'}
+          <div style={{background:'#fffbeb',padding:'4px 10px',display:'flex',alignItems:'center',flex:1}}>
+            <span style={{fontSize:'11px',color:'#374151',fontStyle:'italic'}}>"{remark}"</span>
+          </div>
+        </div>
+        {/* Result */}
+        <div style={{borderRadius:'6px',overflow:'hidden',border:`1.5px solid ${pctNum>=33?'#86efac':'#fca5a5'}`,marginTop:'4px',marginBottom:'0'}}>
+          <div style={{background:pctNum>=33?'linear-gradient(135deg,#166534,#15803d)':'linear-gradient(135deg,#991b1b,#dc2626)',padding:'3px 12px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+            <span style={{fontSize:'9px',fontWeight:'900',color:'rgba(255,255,255,0.8)',textTransform:'uppercase',letterSpacing:'1px'}}>Result</span>
+            <span style={{fontSize:'9px',fontWeight:'700',color:'rgba(255,255,255,0.6)'}}>Session {academicYear}</span>
+          </div>
+          <div style={{background:pctNum>=33?'linear-gradient(135deg,#f0fdf4,#dcfce7)':'#fef2f2',padding:'5px 12px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+            <div>
+              <div style={{fontSize:'13px',fontWeight:'800',color:pctNum>=33?'#166534':'#991b1b'}}>{resultQualified}</div>
+              <div style={{fontSize:'10px',color:'#6b7280',marginTop:'1px'}}>Place: {schoolInfo.schoolAddress||'--'} &nbsp;|&nbsp; Date: {today}</div>
+            </div>
+            <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:'2px'}}>
+              <div style={{fontSize:'16px',fontWeight:'900',letterSpacing:'2px',color:pctNum>=33?'#166534':'#991b1b',border:`2px solid ${pctNum>=33?'#86efac':'#fca5a5'}`,padding:'2px 14px',borderRadius:'4px',background:'white',lineHeight:1.2}}>
+                {pctNum>=33?'PASS':'FAIL'}
+              </div>
+              {pctNum>=33 && (
+                <div style={{fontSize:'8px',fontWeight:'900',letterSpacing:'1px',color:'white',background:pctNum>=65?'#1d4ed8':pctNum>=45?'#15803d':'#d97706',padding:'2px 8px',borderRadius:'3px',textTransform:'uppercase'}}>
+                  {pctNum>=65?'First Division':pctNum>=45?'Second Division':'Third Division'}
+                </div>
+              )}
+            </div>
           </div>
         </div>
         <div style={{flex:'1 1 0px',minHeight:subCount>8?'2mm':'3mm',maxHeight:subCount>8?'6mm':'14mm'}} />
@@ -767,46 +826,62 @@ const ResultGeneration = () => {
         <div className="space-y-4">
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col sm:flex-row items-center justify-between gap-3">
             <div>
-              <p className="text-xs font-black text-gray-400 uppercase">{activeMode.label} · Grade {className}</p>
+              <p className="text-xs font-black text-gray-400 uppercase tracking-tight">{activeMode.label} · Grade {className}</p>
               <p className="text-sm font-bold text-gray-700">{results.length} marksheets generated</p>
             </div>
             <div className="flex items-center gap-2 flex-wrap justify-center">
-              <button onClick={() => setCurrentIdx(i => Math.max(0, i-1))} disabled={currentIdx===0}
-                className="w-9 h-9 rounded-xl border-2 border-gray-100 flex items-center justify-center hover:border-indigo-300 disabled:opacity-30 transition-all">
-                <ChevronLeft size={16} />
-              </button>
-              <span className="text-sm font-black text-gray-700 min-w-[80px] text-center">{currentIdx+1} / {results.length}</span>
-              <button onClick={() => setCurrentIdx(i => Math.min(results.length-1, i+1))} disabled={currentIdx===results.length-1}
-                className="w-9 h-9 rounded-xl border-2 border-gray-100 flex items-center justify-center hover:border-indigo-300 disabled:opacity-30 transition-all">
-                <ChevronRight size={16} />
-              </button>
               <button onClick={handlePrintOne}
-                className="flex items-center gap-2 px-4 py-2 bg-white border-2 border-gray-100 rounded-xl text-sm font-black text-gray-600 hover:border-indigo-300 transition-all">
-                <Printer size={15} /> This One
+                className="flex items-center gap-2 px-4 py-2 bg-white border-2 border-gray-100 rounded-xl text-sm font-black text-gray-600 hover:border-indigo-300 hover:text-indigo-600 transition-all">
+                <Printer size={15} /> Print This
               </button>
               <button onClick={handlePrintAll}
-                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-black hover:bg-indigo-700 transition-all">
-                <Printer size={15} /> Print All
+                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-black hover:bg-indigo-700 transition-all shadow-md shadow-indigo-200">
+                <Printer size={15} /> Print All ({results.length})
               </button>
             </div>
           </div>
 
-          <div className="flex gap-2 flex-wrap">
-            {results.map((s,i) => (
-              <button key={s.studentId} onClick={() => setCurrentIdx(i)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all border-2 ${
-                  i===currentIdx ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-600 border-gray-100 hover:border-indigo-300'}`}>
-                {s.name?.split(' ')[0]}
-              </button>
-            ))}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3">
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 px-1">All Students</p>
+            <div className="flex gap-1.5 flex-wrap">
+              {results.map((s,i) => (
+                <button key={s.studentId} onClick={() => setCurrentIdx(i)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    i===currentIdx
+                      ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200'
+                      : 'bg-gray-50 text-gray-600 hover:bg-indigo-50 hover:text-indigo-600'}`}>
+                  {s.name?.split(' ')[0]}
+                </button>
+              ))}
+            </div>
           </div>
 
-          <div style={{ background:'linear-gradient(135deg,#e0e7ff 0%,#ede9fe 50%,#dbeafe 100%)', borderRadius:'20px', padding:'28px 20px', boxShadow:'inset 0 2px 8px rgba(0,0,0,0.08)' }}>
-            <div style={{ position:'relative', width:'fit-content', margin:'0 auto' }}>
-              <div style={{ position:'absolute', inset:'0', top:'8px', left:'6px', background:'#c7d2e8', borderRadius:'4px', zIndex:0 }} />
-              <div style={{ position:'absolute', inset:'0', top:'4px', left:'3px', background:'#d8e0f0', borderRadius:'4px', zIndex:1 }} />
-              <div style={{ position:'relative', zIndex:2, boxShadow:'0 8px 32px rgba(0,0,0,0.22),0 2px 8px rgba(0,0,0,0.12)', borderRadius:'3px', width:'750px', height:'1058px', overflow:'hidden' }}>
-                <div style={{ transform:'scale(0.942)', transformOrigin:'top left', width:'796px', height:'1122px' }}>
+          {/* Result Preview */}
+          <div style={{ background:'linear-gradient(160deg,#1e1b4b 0%,#312e81 40%,#1e3a5f 100%)', borderRadius:'24px', padding:'32px 24px 36px', boxShadow:'0 20px 60px rgba(30,27,75,0.35),inset 0 1px 0 rgba(255,255,255,0.08)' }}>
+            {/* Top label */}
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'20px' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
+                <div style={{ width:'8px', height:'8px', borderRadius:'50%', background:'#f87171' }} />
+                <div style={{ width:'8px', height:'8px', borderRadius:'50%', background:'#fbbf24' }} />
+                <div style={{ width:'8px', height:'8px', borderRadius:'50%', background:'#34d399' }} />
+              </div>
+              <div style={{ fontSize:'11px', fontWeight:'700', color:'rgba(255,255,255,0.45)', letterSpacing:'2px', textTransform:'uppercase' }}>
+                Marksheet Preview &nbsp;·&nbsp; {results[currentIdx]?.name}
+              </div>
+              <div style={{ fontSize:'11px', fontWeight:'700', color:'rgba(255,255,255,0.35)' }}>
+                {currentIdx + 1} / {results.length}
+              </div>
+            </div>
+
+            {/* Paper shadow stack */}
+            <div style={{ position:'relative', width:'fit-content', margin:'0 auto', overflow:'hidden', borderRadius:'6px' }}>
+              {/* Stack layers */}
+              <div style={{ position:'absolute', top:'10px', left:'8px', width:'635px', background:'rgba(255,255,255,0.12)', borderRadius:'6px', zIndex:0, bottom:'-10px' }} />
+              <div style={{ position:'absolute', top:'5px', left:'4px', width:'635px', background:'rgba(255,255,255,0.2)', borderRadius:'5px', zIndex:1, bottom:'-5px' }} />
+              {/* Main paper */}
+              <div style={{ position:'relative', zIndex:2, borderRadius:'4px', width:'635px', boxShadow:'0 24px 64px rgba(0,0,0,0.5),0 4px 16px rgba(0,0,0,0.3),inset 0 0 0 1px rgba(255,255,255,0.15)', background:'white' }}>
+                <style>{`@media screen { .marksheet-page { overflow: visible !important; height: auto !important; } }`}</style>
+                <div style={{ zoom: 0.8, width:'794px' }}>
                   {mode === 'final' ? (
                     <CombinedMarksheet student={results[currentIdx]} schoolInfo={schoolInfo} academicYear={viewYear} />
                   ) : (
@@ -816,6 +891,27 @@ const ResultGeneration = () => {
                   )}
                 </div>
               </div>
+            </div>
+
+            {/* Bottom nav */}
+            <div style={{ position:'relative', zIndex:10, display:'flex', alignItems:'center', justifyContent:'center', gap:'12px', marginTop:'24px' }}>
+              <button onClick={() => setCurrentIdx(i => Math.max(0, i-1))} disabled={currentIdx===0}
+                style={{ width:'36px', height:'36px', borderRadius:'50%', border:'1.5px solid rgba(255,255,255,0.2)', background:'rgba(255,255,255,0.08)', color:'white', display:'flex', alignItems:'center', justifyContent:'center', cursor:currentIdx===0?'not-allowed':'pointer', opacity:currentIdx===0?0.3:1, transition:'all 0.2s' }}>
+                <ChevronLeft size={16} />
+              </button>
+              <div style={{ display:'flex', gap:'6px' }}>
+                {results.slice(Math.max(0,currentIdx-3), Math.min(results.length, currentIdx+4)).map((_,relIdx) => {
+                  const absIdx = Math.max(0,currentIdx-3) + relIdx;
+                  return (
+                    <button key={absIdx} onClick={() => setCurrentIdx(absIdx)}
+                      style={{ width: absIdx===currentIdx?'28px':'8px', height:'8px', borderRadius:'4px', border:'none', background: absIdx===currentIdx?'white':'rgba(255,255,255,0.3)', cursor:'pointer', transition:'all 0.25s', padding:0 }} />
+                  );
+                })}
+              </div>
+              <button onClick={() => setCurrentIdx(i => Math.min(results.length-1, i+1))} disabled={currentIdx===results.length-1}
+                style={{ width:'36px', height:'36px', borderRadius:'50%', border:'1.5px solid rgba(255,255,255,0.2)', background:'rgba(255,255,255,0.08)', color:'white', display:'flex', alignItems:'center', justifyContent:'center', cursor:currentIdx===results.length-1?'not-allowed':'pointer', opacity:currentIdx===results.length-1?0.3:1, transition:'all 0.2s' }}>
+                <ChevronRight size={16} />
+              </button>
             </div>
           </div>
 

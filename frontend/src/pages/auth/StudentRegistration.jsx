@@ -43,7 +43,7 @@ const StudentRegistration = () => {
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
-  const [isNewAdmission, setIsNewAdmission] = useState(false);
+  const [isNewAdmission, setIsNewAdmission] = useState(true);
 
   const { register, handleSubmit, setValue, trigger, watch, formState: { errors } } = useForm();
 
@@ -532,48 +532,32 @@ const StudentRegistration = () => {
                 </div>
               </div>
 
-                {/* NEW ADMISSION CHECKBOX */}
-                <div className="flex items-start gap-3 p-4 bg-amber-50 rounded-xl border-2 border-amber-200">
-                  <input 
-                    type="checkbox" 
-                    id="newAdmission" 
-                    checked={isNewAdmission}
-                    onChange={(e) => setIsNewAdmission(e.target.checked)}
-                    className="w-5 h-5 rounded accent-warning mt-0.5 cursor-pointer" 
-                  />
-                  <label htmlFor="newAdmission" className="text-sm font-bold text-amber-800 cursor-pointer">
-                    ⚠️ I am taking <span className="underline">NEW ADMISSION</span> in this school (not continuing from previous year)
-                  </label>
-                </div>
-
-                {/* DOCUMENT CHECKLIST - CONDITIONAL */}
-                {isNewAdmission && (
-                  <div className="animate-in fade-in slide-in-from-top-4 duration-500 space-y-4">
-                    <div className="flex items-center gap-3">
-                      <div className="h-px flex-grow bg-red-200"></div>
-                      <span className="text-xs font-black text-red-600 uppercase">Required Documents</span>
-                      <div className="h-px flex-grow bg-red-200"></div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {CHECKLIST_DOCS.map((doc) => (
-                        <label 
-                          key={doc.id} 
-                          className="flex items-center gap-3 p-3 bg-white border-2 border-gray-100 rounded-xl hover:border-primary transition-all cursor-pointer group"
-                        >
-                          <input 
-                            type="checkbox" 
-                            {...register(`documents.${doc.id}`)} 
-                            className="w-5 h-5 rounded accent-success" 
-                          />
-                          <span className="text-xs font-bold text-gray-600 group-hover:text-primary transition-colors">
-                            {doc.label}
-                          </span>
-                        </label>
-                      ))}
-                    </div>
+                {/* DOCUMENT CHECKLIST */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-px flex-grow bg-indigo-200"></div>
+                    <span className="text-xs font-black text-indigo-600 uppercase">Documents Submitted by Parents</span>
+                    <div className="h-px flex-grow bg-indigo-200"></div>
                   </div>
-                )}
+                  <p className="text-xs text-gray-500 font-medium -mt-2">Tick the documents that have been brought:</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {CHECKLIST_DOCS.map((doc) => (
+                      <label 
+                        key={doc.id} 
+                        className="flex items-center gap-3 p-3 bg-white border-2 border-gray-100 rounded-xl hover:border-primary transition-all cursor-pointer group"
+                      >
+                        <input 
+                          type="checkbox" 
+                          {...register(`documents.${doc.id}`)} 
+                          className="w-5 h-5 rounded accent-success" 
+                        />
+                        <span className="text-xs font-bold text-gray-600 group-hover:text-primary transition-colors">
+                          {doc.label}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
 
                 <div className="flex gap-3 pt-4">
                   <Button 
