@@ -105,21 +105,39 @@ const handleUpdate = async (e) => {
   e.preventDefault();
   setSubmitting(true);
   const formData = new FormData(e.target);
-  // Filter out empty strings so we never blank out existing DB values
-  const data = Object.fromEntries(
-    [...formData.entries()].filter(([, v]) => v !== '')
-  );
-    try {
-      await API.put(`/admin/students/${selectedStudent._id}`, data);
-      setToast({ message: "Student records updated!", type: "success" });
-      setIsEditModalOpen(false);
-      setFilters({ ...filters }); 
-    } catch (err) {
-      setToast({ message: "Update failed", type: "error" });
-    } finally {
-      setSubmitting(false);
+  const raw = Object.fromEntries([...formData.entries()].filter(([, v]) => v !== ''));
+
+  // Build nested documents object from documents.* keys
+  const data = {};
+  const documents = {};
+  Object.entries(raw).forEach(([key, val]) => {
+    if (key.startsWith('documents.')) {
+      documents[key.replace('documents.', '')] = val === 'on' || val === true || val === 'true';
+    } else {
+      data[key] = val;
     }
-  };
+  });
+
+  // Also capture unchecked checkboxes (they don't appear in FormData)
+  const docIds = ['transferCertificate','characterCertificate','markSheet','migrationCertificate','casteCertificate','birthCertificate','fivePhotos','studentAadhar','motherAadhar','fatherAadhar'];
+  docIds.forEach(id => {
+    if (!(id in documents)) documents[id] = false;
+  });
+
+  if (Object.keys(documents).length > 0) data.documents = documents;
+  if (e._imagePreview) data.profileImage = e._imagePreview;
+
+  try {
+    await API.put(`/admin/students/${selectedStudent._id}`, data);
+    setToast({ message: "Student records updated!", type: "success" });
+    setIsEditModalOpen(false);
+    setFilters({ ...filters });
+  } catch (err) {
+    setToast({ message: "Update failed", type: "error" });
+  } finally {
+    setSubmitting(false);
+  }
+};
 
   const handleManualReset = async () => {
     if (!resetPasswordValue) return;
@@ -818,6 +836,36 @@ const EditStudentModal = ({ isOpen, onClose, student, onSubmit, submitting }) =>
               placeholder="11 or 12-digit PEN"
               maxLength={12}
             />
+          </div>
+        </div>
+
+        {/* DOCUMENTS CHECKLIST */}
+        <div className="bg-amber-50/50 p-4 rounded-2xl border border-amber-100">
+          <p className="text-[10px] font-black text-amber-700 uppercase mb-3">Documents Submitted</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {[
+              { id: 'transferCertificate', label: 'Transfer Certificate' },
+              { id: 'characterCertificate', label: 'Character Certificate' },
+              { id: 'markSheet', label: 'Mark Sheet' },
+              { id: 'migrationCertificate', label: 'Migration Certificate' },
+              { id: 'casteCertificate', label: 'Caste Certificate' },
+              { id: 'birthCertificate', label: 'Birth Certificate' },
+              { id: 'fivePhotos', label: '5 Photos Physical' },
+              { id: 'studentAadhar', label: 'Student Aadhar Photo Copy' },
+              { id: 'motherAadhar', label: 'Mother Aadhar Photo Copy' },
+              { id: 'fatherAadhar', label: 'Father Aadhar Photo Copy' },
+            ].map(doc => (
+              <label key={doc.id}
+                className="flex items-center gap-3 p-2.5 bg-white border-2 border-gray-100 rounded-xl hover:border-amber-300 transition-all cursor-pointer">
+                <input
+                  type="checkbox"
+                  name={`documents.${doc.id}`}
+                  defaultChecked={student.documents?.[doc.id] || false}
+                  className="w-4 h-4 rounded accent-amber-500"
+                />
+                <span className="text-xs font-bold text-gray-600">{doc.label}</span>
+              </label>
+            ))}
           </div>
         </div>
 

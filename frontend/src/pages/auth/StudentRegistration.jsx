@@ -56,7 +56,9 @@ const StudentRegistration = () => {
     { id: 'casteCertificate', label: 'Caste Certificate' },
     { id: 'birthCertificate', label: 'Birth Certificate' },
     { id: 'fivePhotos', label: '5 Photos Physical' },
-    { id: 'aadharPhotoCopy', label: 'Aadhar Photo Copy (Student & Parent)' },
+    { id: 'studentAadhar', label: 'Student Aadhar Photo Copy' },
+    { id: 'motherAadhar', label: 'Mother Aadhar Photo Copy' },
+    { id: 'fatherAadhar', label: 'Father Aadhar Photo Copy' },
   ];
 
   // --- EVENT HANDLERS ---
