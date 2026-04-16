@@ -1,90 +1,45 @@
+// v5 - CORS fix
 const express = require('express');
 const dotenv = require('dotenv');
-const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const connectDB = require('./config/db');
 const { errorHandler } = require('./middlewares/errorMiddleware');
 
-// Load environment variables FIRST
 dotenv.config();
 
-// Validate required environment variables at startup
 const requiredEnvVars = ['MONGO_URI', 'JWT_SECRET'];
 requiredEnvVars.forEach((key) => {
     if (!process.env[key]) {
-        console.error(`❌ Missing required environment variable: ${key}`);
+        console.error(`Missing env: ${key}`);
         process.exit(1);
     }
 });
 
-// Connect to Database
 connectDB();
 
 const app = express();
 
-// ── CORS first — before everything including helmet
+// CORS - must be first middleware
 app.use((req, res, next) => {
-    const envOrigins = process.env.ALLOWED_ORIGINS
-        ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
-        : [];
-    const allowed = [
-        'https://dvconventschool-three.vercel.app',
-        'https://dvgss.in',
-        'https://www.dvgss.in',
-        'http://localhost:5173',
-        'http://localhost:3000',
-        ...envOrigins,
-    ];
-    const origin = req.headers.origin;
-    console.log(`[CORS] origin=${origin} allowed=${allowed.includes(origin)}`);
-    if (!origin || allowed.includes(origin)) {
-        res.setHeader('Access-Control-Allow-Origin', origin || '*');
-    }
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,PATCH,OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+    res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,PATCH,OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Origin,X-Requested-With,Content-Type,Accept,Authorization');
     if (req.method === 'OPTIONS') {
-        res.setHeader('Access-Control-Max-Age', '86400');
-        return res.sendStatus(204);
+        return res.status(200).end();
     }
     next();
 });
 
-// ── Security Headers (helmet) — after CORS
-app.use(helmet({ crossOriginResourcePolicy: false }));
+app.use(helmet({ crossOriginResourcePolicy: false, crossOriginOpenerPolicy: false }));
 
-// ── Rate Limiting — 200 requests per 15 min per IP
-const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 200,
-    standardHeaders: true,
-    legacyHeaders: false,
-    message: { message: 'Too many requests, please try again later.' },
-});
+const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 300 });
 app.use('/api/', limiter);
 
-// ── Auth routes stricter limit — 20 attempts per 15 min
-const authLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 20,
-    message: { message: 'Too many login attempts, please try again later.' },
-});
-app.use('/api/auth/', authLimiter);
-
-// ── Body parsers
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
-// ── Request logger (dev only)
-if (process.env.NODE_ENV !== 'production') {
-    app.use((req, _res, next) => {
-        console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
-        next();
-    });
-}
-
-// ── Routes
 app.use('/api/auth',       require('./routes/authRoutes'));
 app.use('/api/students',   require('./routes/studentRoutes'));
 app.use('/api/admin',      require('./routes/adminRoutes'));
@@ -98,20 +53,12 @@ app.use('/api/datesheet',  require('./routes/datesheetRoutes'));
 app.use('/api/fees',       require('./routes/feeRoutes'));
 app.use('/api/bus',        require('./routes/busRoutes'));
 
-// ── Health check
-app.get('/', (_req, res) => {
-    res.json({ status: 'ok', message: 'DV Convent School API is running' });
-});
+app.get('/', (_req, res) => res.json({ status: 'ok', version: 5 }));
 
-// ── 404
-app.use((_req, res) => {
-    res.status(404).json({ message: 'Route not found' });
-});
-
-// ── Global error handler
+app.use((_req, res) => res.status(404).json({ message: 'Route not found' }));
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-    console.log(`🚀 Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
+    console.log(`Server v5 running on port ${PORT}`);
 });
