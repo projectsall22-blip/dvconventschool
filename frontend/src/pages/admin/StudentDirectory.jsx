@@ -54,8 +54,6 @@ const StudentDirectory = () => {
     studentAadhar:        'Student Aadhar Photo Copy',
     motherAadhar:         'Mother Aadhar Photo Copy',
     fatherAadhar:         'Father Aadhar Photo Copy',
-    // legacy key support
-    aadharPhotoCopy:      'Aadhar Photo Copy',
   };
 
 const availableParams = [
@@ -601,11 +599,11 @@ const ViewStudentModal = ({ isOpen, onClose, student, documentLabels }) => {
                 }
               </div>
               {/* Pending documents */}
-              {student.documents && Object.entries(student.documents).filter(([, v]) => v === false).length > 0 && (
+              {student.documents && Object.entries(student.documents).filter(([k, v]) => v === false && documentLabels?.[k]).length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-1.5">
-                  {Object.entries(student.documents).filter(([, v]) => v === false).map(([key]) => (
+                  {Object.entries(student.documents).filter(([k, v]) => v === false && documentLabels?.[k]).map(([key]) => (
                     <span key={key} className="text-[10px] text-gray-400 bg-gray-100 px-2 py-1 rounded-lg line-through">
-                      {documentLabels?.[key] || key}
+                      {documentLabels?.[key]}
                     </span>
                   ))}
                 </div>
