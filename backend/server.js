@@ -26,27 +26,25 @@ const app = express();
 // ── Security Headers (helmet)
 app.use(helmet());
 
-// ── CORS
-const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:5173,http://localhost:3000').split(',');
-const corsOptions = {
-    origin: function(origin, callback) {
-        const whitelist = [
-            'https://dvgss.in',
-            'https://www.dvgss.in',
-            'https://dvconventschool-three.vercel.app',
-            'http://localhost:5173',
-            'http://localhost:3000',
-            ...allowedOrigins.map(o => o.trim()).filter(Boolean),
-        ];
-        if (!origin) return callback(null, true);
-        if (whitelist.includes(origin)) return callback(null, true);
-        return callback(new Error(`CORS blocked: ${origin}`));
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-};
-app.use(cors(corsOptions));
+// ── CORS — manual headers (works with Express v5)
+app.use((req, res, next) => {
+    const allowed = [
+        'https://dvconventschool-three.vercel.app',
+        'https://dvgss.in',
+        'https://www.dvgss.in',
+        'http://localhost:5173',
+        'http://localhost:3000',
+    ];
+    const origin = req.headers.origin;
+    if (allowed.includes(origin)) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+    }
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,PATCH,OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+    if (req.method === 'OPTIONS') return res.sendStatus(200);
+    next();
+});
 
 // ── Rate Limiting — 200 requests per 15 min per IP
 const limiter = rateLimit({
