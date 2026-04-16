@@ -803,7 +803,7 @@ const FeeManagement = () => {
             {/* ── Today's Summary + Daily Report Download */}
             {summary?.today && (
                 <div className="space-y-3">
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         {[
                             { icon: TrendingUp, iconBg: 'bg-emerald-100', iconColor: 'text-emerald-600', label: 'Today Total', value: fmt(summary.today.total), sub: `${summary.today.count} receipt${summary.today.count !== 1 ? 's' : ''} today` },
                             { icon: Banknote,   iconBg: 'bg-amber-100',   iconColor: 'text-amber-600',   label: 'Today Cash',  value: fmt(summary.today.cash),  sub: 'Cash payments' },
@@ -856,15 +856,15 @@ const FeeManagement = () => {
             )}
 
             {/* ── Tabs */}
-            <div className="flex gap-1 bg-white rounded-xl p-1 shadow-sm border border-slate-100 w-fit">
-                {[['payments','Payments'],['structures','Fee Structures'],['defaulters','Defaulters']].map(([key, label]) => (
+            <div className="flex gap-1 bg-white rounded-xl p-1 shadow-sm border border-slate-100 overflow-x-auto">
+                {[['payments','Payments'],['structures','Structures'],['defaulters','Defaulters']].map(([key, label]) => (
                     <button key={key} onClick={() => setTab(key)}
-                        className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all ${tab === key ? 'bg-primary text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
+                        className={`px-3 py-2 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${tab === key ? 'bg-primary text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
                         {label}
                     </button>
                 ))}
                 <button onClick={() => setTab('pending_upi')}
-                    className={`relative px-5 py-2 rounded-lg text-sm font-semibold transition-all ${tab === 'pending_upi' ? 'bg-amber-500 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
+                    className={`relative px-3 py-2 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${tab === 'pending_upi' ? 'bg-amber-500 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
                     UPI Pending
                     {pendingUpiCount > 0 && (
                         <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-danger text-white text-[10px] font-black rounded-full flex items-center justify-center">

@@ -113,23 +113,27 @@ const LoginPage = () => {
             })}
           />
 
-          <Field
-            label="Password"
-            icon={Lock}
-            type={showPassword ? 'text' : 'password'}
-            placeholder="••••••••"
-            error={errors.password?.message}
-            rightEl={
+          <div className="space-y-1.5">
+            <label className="block text-sm font-semibold text-gray-700">Password</label>
+            <div className={`flex items-center gap-3 border rounded-xl px-4 h-14 bg-gray-50 transition-all
+              ${errors.password ? 'border-red-400 bg-red-50' : 'border-gray-200 focus-within:border-indigo-400 focus-within:bg-white'}`}>
+              <Lock size={18} className="text-gray-400 shrink-0" />
+              <input
+                className="flex-1 bg-transparent outline-none text-sm text-gray-800 placeholder:text-gray-400 font-medium min-w-0"
+                type={showPassword ? 'text' : 'password'}
+                placeholder="••••••••"
+                {...register('password', {
+                  required: 'Password is required',
+                  minLength: { value: 6, message: 'Minimum 6 characters' },
+                })}
+              />
               <button type="button" onClick={() => setShowPassword(p => !p)}
-                className="text-gray-400 hover:text-gray-600 transition-colors shrink-0">
+                className="text-gray-400 hover:text-gray-600 transition-colors shrink-0 p-1">
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
-            }
-            {...register('password', {
-              required: 'Password is required',
-              minLength: { value: 6, message: 'Minimum 6 characters' },
-            })}
-          />
+            </div>
+            {errors.password && <p className="text-xs text-red-500 font-medium">{errors.password.message}</p>}
+          </div>
 
           {/* Login Button */}
           <button type="submit" disabled={isLoading}
