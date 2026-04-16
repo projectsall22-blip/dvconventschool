@@ -28,7 +28,7 @@ app.use(helmet());
 
 // ── CORS
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:5173,http://localhost:3000').split(',');
-app.use(cors({
+const corsOptions = {
     origin: function(origin, callback) {
         const whitelist = [
             'https://dvgss.in',
@@ -38,7 +38,6 @@ app.use(cors({
             'http://localhost:3000',
             ...allowedOrigins.map(o => o.trim()).filter(Boolean),
         ];
-        // Allow requests with no origin (mobile apps, curl, Postman)
         if (!origin) return callback(null, true);
         if (whitelist.includes(origin)) return callback(null, true);
         return callback(new Error(`CORS blocked: ${origin}`));
@@ -46,10 +45,8 @@ app.use(cors({
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
-}));
-
-// Handle preflight for all routes
-app.options('/(.*)', cors());
+};
+app.use(cors(corsOptions));
 
 // ── Rate Limiting — 200 requests per 15 min per IP
 const limiter = rateLimit({
