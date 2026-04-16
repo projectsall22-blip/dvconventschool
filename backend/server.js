@@ -49,7 +49,7 @@ app.use(cors({
 }));
 
 // Handle preflight for all routes
-app.options('*', cors());
+app.options('/(.*)', cors());
 
 // ── Rate Limiting — 200 requests per 15 min per IP
 const limiter = rateLimit({
