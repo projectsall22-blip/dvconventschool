@@ -44,13 +44,18 @@ const StudentDirectory = () => {
 
   // ============ CONSTANTS ============
   const DOCUMENT_LABELS = {
+    transferCertificate:  'Transfer Certificate',
     characterCertificate: 'Character Certificate',
-    markSheet: 'Mark Sheet',
+    markSheet:            'Mark Sheet',
     migrationCertificate: 'Migration Certificate',
-    casteCertificate: 'Caste Certificate',
-    birthCertificate: 'Birth Certificate',
-    fivePhotos: '5 Photos Physical',
-    aadharPhotoCopy: 'Aadhar Photo Copy'
+    casteCertificate:     'Caste Certificate',
+    birthCertificate:     'Birth Certificate',
+    fivePhotos:           '5 Photos Physical',
+    studentAadhar:        'Student Aadhar Photo Copy',
+    motherAadhar:         'Mother Aadhar Photo Copy',
+    fatherAadhar:         'Father Aadhar Photo Copy',
+    // legacy key support
+    aadharPhotoCopy:      'Aadhar Photo Copy',
   };
 
 const availableParams = [
@@ -572,38 +577,40 @@ const ViewStudentModal = ({ isOpen, onClose, student, documentLabels }) => {
               <p className="text-sm font-medium text-gray-600 leading-relaxed">{student.address}</p>
             </div>
             
-            {/* Document Section - IMPROVED READABILITY */}
-            {student.admissionType === 'New' && (
-              <div className="mt-4 pt-4 border-t border-gray-200">
-                <div className="flex items-center gap-2 mb-3">
-                  <CheckCircle className="text-success" size={16} />
-                  <span className="text-[10px] font-black text-gray-700 uppercase tracking-widest">
-                    New Admission Documents
-                  </span>
-                </div>
-
-                <div className="flex flex-wrap gap-2">
-                  {student.documents && 
-                  Object.entries(student.documents)
-                    .filter(([key, value]) => value === true)
-                    .map(([key]) => (
-                      <div 
-                        key={key} 
-                        className="flex items-center gap-2 px-3 py-2 bg-white border-2 border-success/30 rounded-xl shadow-sm"
-                      >
-                        <div className="w-2 h-2 rounded-full bg-success flex-shrink-0"></div>
-                        <span className="text-[11px] font-bold text-gray-800 tracking-tight">
-                          {documentLabels[key] || key}
-                        </span>
-                      </div>
-                  ))}
-
-                  {(!student.documents || Object.values(student.documents).every(v => v === false)) && (
-                    <p className="text-xs italic text-gray-500 px-1 py-2">No documents submitted at registration.</p>
-                  )}
-                </div>
+            {/* Document Section */}
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <div className="flex items-center gap-2 mb-3">
+                <CheckCircle className="text-success" size={16} />
+                <span className="text-[10px] font-black text-gray-700 uppercase tracking-widest">
+                  Documents Submitted
+                </span>
               </div>
-            )}
+              <div className="flex flex-wrap gap-2">
+                {student.documents && Object.entries(student.documents).filter(([, v]) => v === true).length > 0
+                  ? Object.entries(student.documents)
+                      .filter(([, v]) => v === true)
+                      .map(([key]) => (
+                        <div key={key} className="flex items-center gap-2 px-3 py-2 bg-white border-2 border-success/30 rounded-xl shadow-sm">
+                          <div className="w-2 h-2 rounded-full bg-success flex-shrink-0" />
+                          <span className="text-[11px] font-bold text-gray-800 tracking-tight">
+                            {documentLabels?.[key] || key}
+                          </span>
+                        </div>
+                      ))
+                  : <p className="text-xs italic text-gray-500 px-1 py-2">No documents submitted yet.</p>
+                }
+              </div>
+              {/* Pending documents */}
+              {student.documents && Object.entries(student.documents).filter(([, v]) => v === false).length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {Object.entries(student.documents).filter(([, v]) => v === false).map(([key]) => (
+                    <span key={key} className="text-[10px] text-gray-400 bg-gray-100 px-2 py-1 rounded-lg line-through">
+                      {documentLabels?.[key] || key}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
