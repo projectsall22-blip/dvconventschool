@@ -23,10 +23,7 @@ connectDB();
 
 const app = express();
 
-// ── Security Headers (helmet)
-app.use(helmet());
-
-// ── CORS — manual headers (works with Express v5)
+// ── CORS first — before everything including helmet
 app.use((req, res, next) => {
     const allowed = [
         'https://dvconventschool-three.vercel.app',
@@ -45,6 +42,9 @@ app.use((req, res, next) => {
     if (req.method === 'OPTIONS') return res.sendStatus(200);
     next();
 });
+
+// ── Security Headers (helmet) — after CORS
+app.use(helmet({ crossOriginResourcePolicy: false }));
 
 // ── Rate Limiting — 200 requests per 15 min per IP
 const limiter = rateLimit({
