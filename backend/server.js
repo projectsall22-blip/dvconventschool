@@ -1,10 +1,12 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const connectDB = require('./config/db');
 const { errorHandler } = require('./middlewares/errorMiddleware');
 
-// Load environment variables FIRST before anything else
+// Load environment variables FIRST
 dotenv.config();
 
 // Validate required environment variables at startup
@@ -21,22 +23,43 @@ connectDB();
 
 const app = express();
 
-// CORS
+// ── Security Headers (helmet)
+app.use(helmet());
+
+// ── CORS
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:5173,http://localhost:3000').split(',');
 app.use(cors({
     origin: [
-        "https://dvgss.in",
-        "https://www.dvgss.in",
-        ...allowedOrigins
+        'https://dvgss.in',
+        'https://www.dvgss.in',
+        ...allowedOrigins.map(o => o.trim()),
     ],
-    credentials: true
+    credentials: true,
 }));
 
-// Body parsers
+// ── Rate Limiting — 200 requests per 15 min per IP
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 200,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { message: 'Too many requests, please try again later.' },
+});
+app.use('/api/', limiter);
+
+// ── Auth routes stricter limit — 20 attempts per 15 min
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 20,
+    message: { message: 'Too many login attempts, please try again later.' },
+});
+app.use('/api/auth/', authLimiter);
+
+// ── Body parsers
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
-// Request logger (dev only)
+// ── Request logger (dev only)
 if (process.env.NODE_ENV !== 'production') {
     app.use((req, _res, next) => {
         console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
@@ -44,7 +67,7 @@ if (process.env.NODE_ENV !== 'production') {
     });
 }
 
-// Routes
+// ── Routes
 app.use('/api/auth',       require('./routes/authRoutes'));
 app.use('/api/students',   require('./routes/studentRoutes'));
 app.use('/api/admin',      require('./routes/adminRoutes'));
@@ -58,17 +81,17 @@ app.use('/api/datesheet',  require('./routes/datesheetRoutes'));
 app.use('/api/fees',       require('./routes/feeRoutes'));
 app.use('/api/bus',        require('./routes/busRoutes'));
 
-// Health check
+// ── Health check
 app.get('/', (_req, res) => {
     res.json({ status: 'ok', message: 'DV Convent School API is running' });
 });
 
-// 404 handler for unknown routes
+// ── 404
 app.use((_req, res) => {
     res.status(404).json({ message: 'Route not found' });
 });
 
-// Global error handler (must be last)
+// ── Global error handler
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
