@@ -470,7 +470,7 @@ const FeeStructureModal = ({ onClose, onSuccess, academicYear, editing }) => {
         <Modal isOpen onClose={onClose} title={editing ? 'Edit Fee Structure' : 'Create Fee Structure'} size="xl">
             {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
             <form onSubmit={handleSubmit} className="space-y-5">
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
                         <label className="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wide">Class</label>
                         <select disabled={!!editing}
@@ -495,10 +495,10 @@ const FeeStructureModal = ({ onClose, onSuccess, academicYear, editing }) => {
                     </div>
                 </div>
 
-                <div className="flex items-center gap-3 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3">
                     <span className="text-xs font-bold text-primary shrink-0">Fill all months:</span>
                     <input type="number" min="0" placeholder="Enter base fee amount"
-                        className="flex-1 border border-blue-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary/30"
+                        className="w-full sm:flex-1 border border-blue-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary/30"
                         onChange={e => fillAll(e.target.value)} />
                     <span className="text-xs text-slate-400 shrink-0">₹/month</span>
                 </div>
@@ -506,19 +506,19 @@ const FeeStructureModal = ({ onClose, onSuccess, academicYear, editing }) => {
                 <div>
                     <div className="flex items-center justify-between mb-2">
                         <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Month-wise Fee</label>
-                        <span className="text-xs text-slate-400">Base fee + extra fees per month</span>
+                        <span className="text-xs text-slate-400 hidden sm:block">Base fee + extra fees per month</span>
                     </div>
                     <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1">
                         {monthFees.map((m, mIdx) => (
                             <div key={m.month} className="bg-slate-50 border border-slate-100 rounded-xl overflow-hidden">
-                                <div className="flex items-center gap-3 px-3 py-2.5">
-                                    <span className="text-sm font-black text-slate-700 w-24 shrink-0">{m.month}</span>
-                                    <div className="flex items-center gap-1.5 flex-1">
+                                <div className="flex items-center gap-2 px-3 py-2.5">
+                                    <span className="text-sm font-black text-slate-700 w-20 shrink-0">{m.month}</span>
+                                    <div className="flex items-center gap-1 flex-1 min-w-0">
                                         <span className="text-xs text-slate-400">₹</span>
                                         <input type="number" min="0" value={m.baseFee || ''}
                                             onChange={e => updateBaseFee(mIdx, e.target.value)}
                                             placeholder="Base fee"
-                                            className="flex-1 border border-slate-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary/30" />
+                                            className="flex-1 min-w-0 border border-slate-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary/30" />
                                     </div>
                                     <button type="button" onClick={() => addExtraFee(mIdx)}
                                         className="text-[10px] font-bold text-primary bg-blue-50 hover:bg-blue-100 px-2 py-1.5 rounded-lg transition-colors flex items-center gap-1 shrink-0">
@@ -526,16 +526,16 @@ const FeeStructureModal = ({ onClose, onSuccess, academicYear, editing }) => {
                                     </button>
                                 </div>
                                 {m.extraFees.map((e, eIdx) => (
-                                    <div key={eIdx} className="flex items-center gap-2 px-3 pb-2 pl-8">
-                                        <input type="text" placeholder="Fee name (e.g. Exam Fee)"
+                                    <div key={eIdx} className="flex items-center gap-2 px-3 pb-2 pl-4">
+                                        <input type="text" placeholder="Fee name"
                                             value={e.name} onChange={ev => updateExtraFee(mIdx, eIdx, 'name', ev.target.value)}
-                                            className="flex-1 border border-violet-200 bg-violet-50 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-300" />
-                                        <div className="flex items-center gap-1">
+                                            className="flex-1 min-w-0 border border-violet-200 bg-violet-50 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-300" />
+                                        <div className="flex items-center gap-1 shrink-0">
                                             <span className="text-xs text-slate-400">₹</span>
                                             <input type="number" min="0" placeholder="0"
                                                 value={e.amount || ''}
                                                 onChange={ev => updateExtraFee(mIdx, eIdx, 'amount', ev.target.value)}
-                                                className="w-24 border border-violet-200 bg-violet-50 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-300" />
+                                                className="w-16 border border-violet-200 bg-violet-50 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-300" />
                                         </div>
                                         <button type="button" onClick={() => removeExtraFee(mIdx, eIdx)}
                                             className="text-danger hover:text-danger/70 shrink-0">
