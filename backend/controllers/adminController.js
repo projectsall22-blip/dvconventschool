@@ -135,11 +135,22 @@ const updateStudent = async (req, res) => {
             return res.status(404).json({ message: "Student not found" });
         }
 
-        // We update the record but prevent changing the UID via this route
+        const { documents, ...rest } = req.body;
+
+        // Build update object
+        const updateObj = { $set: { ...rest } };
+
+        // Handle documents separately using dot notation so nested fields save properly
+        if (documents && typeof documents === 'object') {
+            Object.entries(documents).forEach(([key, val]) => {
+                updateObj.$set[`documents.${key}`] = val === true || val === 'true' || val === 'on';
+            });
+        }
+
         const updatedStudent = await Student.findByIdAndUpdate(
             req.params.id,
-            { $set: req.body },
-            { new: true, runValidators: true }
+            updateObj,
+            { new: true, runValidators: false }
         ).select('-password');
 
         res.status(200).json({
