@@ -32,7 +32,7 @@ const StudentCard = ({ student, settings, color = '#1565c0' }) => {
   );
 
   return (
-    <div style={{ width: CARD_W, height: CARD_H, fontFamily: 'Arial, sans-serif', borderRadius: 12, overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 6px 24px rgba(0,0,0,0.18)', flexShrink: 0, background: '#fff' }}>
+    <div style={{ width: CARD_W, minHeight: CARD_H, fontFamily: 'Arial, sans-serif', borderRadius: 12, overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 6px 24px rgba(0,0,0,0.18)', flexShrink: 0, background: '#fff' }}>
 
       {/* ── Header ── */}
       <div style={{ background: `linear-gradient(180deg, ${colorDark} 0%, ${colorLight} 100%)`, padding: '8px 12px', flexShrink: 0 }}>
@@ -113,7 +113,7 @@ const TeacherCard = ({ teacher, settings }) => {
     : null;
 
   return (
-    <div style={{ width: CARD_W, height: CARD_H, fontFamily: 'Arial, sans-serif', borderRadius: 12, overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 6px 24px rgba(0,0,0,0.2)', flexShrink: 0, background: '#fff' }}>
+    <div style={{ width: CARD_W, minHeight: CARD_H, fontFamily: 'Arial, sans-serif', borderRadius: 12, overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 6px 24px rgba(0,0,0,0.2)', flexShrink: 0, background: '#fff' }}>
 
       {/* ── Dark Red Header ── */}
       <div style={{ background: 'linear-gradient(180deg, #8b1a1a 0%, #a52020 100%)', padding: '8px 12px', flexShrink: 0 }}>
