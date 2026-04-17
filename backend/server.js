@@ -6,6 +6,8 @@ const rateLimit = require('express-rate-limit');
 const connectDB = require('./config/db');
 const { errorHandler } = require('./middlewares/errorMiddleware');
 
+const path = require('path');
+
 dotenv.config();
 
 const requiredEnvVars = ['MONGO_URI', 'JWT_SECRET'];
@@ -47,6 +49,9 @@ app.use('/api/', limiter);
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
+
+// Serve uploaded files (profile images, logos, etc.)
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use('/api/auth',       require('./routes/authRoutes'));
 app.use('/api/students',   require('./routes/studentRoutes'));

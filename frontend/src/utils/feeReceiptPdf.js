@@ -196,30 +196,36 @@ function buildCopy(data, copyLabel) {
 }
 
 export async function downloadFeeReceipt(receiptData) {
-    // Convert logo URL → base64 so it works in the new window
     const apiBase = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL)
         ? import.meta.env.VITE_API_URL.replace('/api', '')
         : '';
 
-    async function toBase64(src) {
-        if (!src) return null;
-        if (src.startsWith('data:')) return src;
-        const url = src.startsWith('http') ? src : `${apiBase}${src}`;
-        try {
-            const res  = await fetch(url);
-            const blob = await res.blob();
-            return await new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.onloadend = () => resolve(reader.result);
-                reader.readAsDataURL(blob);
-            });
-        } catch { return null; }
+    // Convert any image src → base64 using canvas (works cross-origin too)
+    function imgToBase64(src) {
+        return new Promise((resolve) => {
+            if (!src) return resolve(null);
+            if (src.startsWith('data:')) return resolve(src);
+            const url = src.startsWith('http') ? src : `${apiBase}${src}`;
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = () => {
+                try {
+                    const c = document.createElement('canvas');
+                    c.width = img.naturalWidth;
+                    c.height = img.naturalHeight;
+                    c.getContext('2d').drawImage(img, 0, 0);
+                    resolve(c.toDataURL('image/png'));
+                } catch { resolve(null); }
+            };
+            img.onerror = () => resolve(null);
+            img.src = url;
+        });
     }
 
-    // Try settings logo first, then fallback to bundled asset
-    let logoBase64 = await toBase64(receiptData.schoolLogo);
+    // Try settings logo first, then fallback to bundled default
+    let logoBase64 = await imgToBase64(receiptData.schoolLogo);
     if (!logoBase64) {
-        logoBase64 = await toBase64(defaultLogoUrl);
+        logoBase64 = await imgToBase64(defaultLogoUrl);
     }
 
     const dataWithLogo = { ...receiptData, schoolLogo: logoBase64 };
