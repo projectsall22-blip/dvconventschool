@@ -34,8 +34,8 @@ function buildCopy(data, copyLabel) {
     const grandTotal = payments.reduce((s, p) => s + p.amountPaid, 0);
     const months = payments.map(p => p.month || 'General').join(', ');
 
-    // Logo: already base64 (converted before calling buildCopy)
-    const logoSrc = schoolLogo || null;
+    // Logo: use converted base64, or fall back to the bundled URL directly
+    const logoSrc = schoolLogo || defaultLogoUrl;
 
     // Build fee rows — one per month with sub-rows for components
     let slNo = 1;
@@ -215,7 +215,10 @@ export async function downloadFeeReceipt(receiptData) {
                     c.height = img.naturalHeight;
                     c.getContext('2d').drawImage(img, 0, 0);
                     resolve(c.toDataURL('image/png'));
-                } catch { resolve(null); }
+                } catch {
+                    // canvas tainted — return the URL directly so img tag still works
+                    resolve(url);
+                }
             };
             img.onerror = () => resolve(null);
             img.src = url;
@@ -225,7 +228,8 @@ export async function downloadFeeReceipt(receiptData) {
     // Try settings logo first, then fallback to bundled default
     let logoBase64 = await imgToBase64(receiptData.schoolLogo);
     if (!logoBase64) {
-        logoBase64 = await imgToBase64(defaultLogoUrl);
+        // defaultLogoUrl is a Vite-bundled URL — use directly, no conversion needed
+        logoBase64 = defaultLogoUrl;
     }
 
     const dataWithLogo = { ...receiptData, schoolLogo: logoBase64 };
