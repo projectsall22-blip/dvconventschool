@@ -1,8 +1,6 @@
 import JSZip from 'jszip';
 
-// 216×340px at 3× = 648×1020
-const CW = 648;
-const CH = 1020;
+const CW = 648;   // 216px × 3
 const R  = 3;
 const s  = (v) => v * R;
 
@@ -37,7 +35,7 @@ const ellipseText = (ctx, text, maxW) => {
   return t;
 };
 
-// Wraps text into multiple lines fitting maxW, returns array of lines
+// Word-wrap text into lines that fit maxW
 const wrapText = (ctx, text, maxW) => {
   if (!text) return ['—'];
   const words = String(text).split(' ');
@@ -65,8 +63,50 @@ const fmtDate = (d) => d
 // ════════════════════════════════════════════════════════════════════════════
 const drawStudentCard = async (canvas, student, settings, assets, color = '#1565c0') => {
   const { logoImg, signImg, photoImg } = assets;
-  const ctx = canvas.getContext('2d');
+
+  // ── Layout constants (same as preview) ───────────────────────────────────
+  const hdrH   = s(72);
+  const waveH  = s(10);
+  const photoW = s(86), photoH = s(94);
+  const nameH  = s(18);   // name text
+  const uidH   = s(14);   // uid pill
+  const lx2    = s(12), vx = lx2 + s(62), valMaxW = CW - vx - lx2;
+  const baseRH = s(14);   // single-line row height (matches preview padding: 3px top+bottom + 7px font ≈ 14)
+  const lineH  = s(9);    // per extra line height inside a wrapped row
+  const ftH    = s(32);   // footer (class + sign area)
+  const noteH  = s(16);   // bottom strip
+
+  // ── Pre-measure rows to get dynamic height ────────────────────────────────
+  // We need a ctx to measure — use a temp canvas
+  const tmp = document.createElement('canvas');
+  tmp.width = CW; tmp.height = 10;
+  const mctx = tmp.getContext('2d');
+
+  const rows = [
+    ["Father's Name", student.fatherName || '—'],
+    ["Mother's Name", student.motherName || '—'],
+    ['D.O.B.',        fmtDate(student.dateOfBirth)],
+    ['Contact No.',   student.fatherMobile || student.motherMobile || student.guardianMobile || '—'],
+    ['Add.',          student.address || '—'],
+  ];
+
+  mctx.font = `500 ${s(7)}px Arial`;
+  const rowHeights = rows.map(([, val]) => {
+    const lines = wrapText(mctx, val, valMaxW);
+    return lines.length > 1 ? lines.length * lineH + s(4) : baseRH;
+  });
+  const totalRowsH = rowHeights.reduce((a, b) => a + b, 0);
+
+  // Total canvas height = header + wave + photo + name + uid + gap + rows + footer + note
+  const photoY  = hdrH + waveH - s(2);
+  const nameY   = photoY + photoH + s(5);
+  const uidY    = nameY + nameH;
+  const rsYStart = uidY + uidH + s(5);
+  const CH = rsYStart + totalRowsH + s(2) + ftH + noteH;
+
+  // ── Draw ──────────────────────────────────────────────────────────────────
   canvas.width = CW; canvas.height = CH;
+  const ctx = canvas.getContext('2d');
 
   ctx.save();
   roundRect(ctx, 0, 0, CW, CH, s(12));
@@ -74,13 +114,11 @@ const drawStudentCard = async (canvas, student, settings, assets, color = '#1565
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, CW, CH);
 
-  // ── Header ──────────────────────────────────────────────────────────────
-  const hdrH = s(72);
+  // Header
   const hg = ctx.createLinearGradient(0, 0, 0, hdrH);
   hg.addColorStop(0, color); hg.addColorStop(1, color + 'dd');
   ctx.fillStyle = hg; ctx.fillRect(0, 0, CW, hdrH);
 
-  // Logo
   const logoSz = s(52), lx = s(10), ly = (hdrH - logoSz) / 2;
   ctx.save();
   ctx.beginPath(); ctx.arc(lx + logoSz/2, ly + logoSz/2, logoSz/2, 0, Math.PI*2);
@@ -89,7 +127,6 @@ const drawStudentCard = async (canvas, student, settings, assets, color = '#1565
   else { ctx.fillStyle = '#e0e7ff'; ctx.fillRect(lx, ly, logoSz, logoSz); }
   ctx.restore();
 
-  // School text — centered in remaining space
   const tx = lx + logoSz + s(8), tw = CW - tx - s(8);
   const tyStart = ly + s(4);
   ctx.textAlign = 'center'; ctx.textBaseline = 'top';
@@ -102,15 +139,13 @@ const drawStudentCard = async (canvas, student, settings, assets, color = '#1565
   ctx.font = `800 ${s(7)}px Arial`; ctx.fillStyle = '#fff';
   ctx.fillText(`Phone No.: ${settings.contactNumber || '—'}`, tx + tw/2, tyStart + s(37));
 
-  // ── Wave divider ─────────────────────────────────────────────────────────
-  const waveH = s(10);
+  // Wave divider
   const wg = ctx.createLinearGradient(0, hdrH, 0, hdrH + waveH);
   wg.addColorStop(0, color + 'dd'); wg.addColorStop(1, '#ffffff');
   ctx.fillStyle = wg; ctx.fillRect(0, hdrH, CW, waveH);
 
-  // ── Photo ─────────────────────────────────────────────────────────────────
-  const photoW = s(86), photoH = s(94);
-  const photoX = (CW - photoW) / 2, photoY = hdrH + waveH - s(2);
+  // Photo
+  const photoX = (CW - photoW) / 2;
   ctx.strokeStyle = color; ctx.lineWidth = s(2.5);
   ctx.strokeRect(photoX, photoY, photoW, photoH);
   if (photoImg) {
@@ -122,8 +157,7 @@ const drawStudentCard = async (canvas, student, settings, assets, color = '#1565
     ctx.fillText((student.name || '?').charAt(0).toUpperCase(), photoX + photoW/2, photoY + photoH/2);
   }
 
-  // ── Name + UID badge ─────────────────────────────────────────────────────
-  const nameY = photoY + photoH + s(5);
+  // Name
   ctx.font = `700 ${s(13)}px Arial`; ctx.fillStyle = '#111827';
   ctx.textAlign = 'center'; ctx.textBaseline = 'top';
   ctx.fillText(ellipseText(ctx, student.name || '', CW - s(20)), CW/2, nameY);
@@ -131,32 +165,19 @@ const drawStudentCard = async (canvas, student, settings, assets, color = '#1565
   // UID pill
   const uidTxt = `UID: ${student.UID || '—'}`;
   ctx.font = `800 ${s(7.5)}px Arial`;
-  const uidW = ctx.measureText(uidTxt).width + s(24), uidH = s(14);
-  const uidX = (CW - uidW) / 2, uidY = nameY + s(17);
+  const uidW = ctx.measureText(uidTxt).width + s(24);
+  const uidX = (CW - uidW) / 2;
   roundRect(ctx, uidX, uidY, uidW, uidH, s(7));
   ctx.fillStyle = color; ctx.fill();
   ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText(uidTxt, CW/2, uidY + uidH/2);
 
-  // ── Info rows ─────────────────────────────────────────────────────────────
-  const rows = [
-    ["Father's Name", student.fatherName || '—'],
-    ["Mother's Name", student.motherName || '—'],
-    ['D.O.B.',        fmtDate(student.dateOfBirth)],
-    ['Contact No.',   student.fatherMobile || student.guardianMobile || '—'],
-    ['Add.',          student.address || '—'],
-  ];
-  const lx2 = s(12), vx = lx2 + s(62), valMaxW = CW - vx - lx2;
-  const rh = s(14);
-  let rsY = uidY + uidH + s(5);
-
+  // Info rows
+  let rsY = rsYStart;
   rows.forEach(([lbl, val], i) => {
-    const ry = rsY;
-    ctx.font = `500 ${s(7)}px Arial`;
-    const lines = wrapText(ctx, val, valMaxW);
-    const rowH = lines.length > 1 ? lines.length * s(9) + s(4) : rh;
+    const ry  = rsY;
+    const rowH = rowHeights[i];
 
-    // divider
     ctx.strokeStyle = '#e5e7eb'; ctx.lineWidth = s(1);
     ctx.beginPath(); ctx.moveTo(lx2, ry); ctx.lineTo(CW - lx2, ry); ctx.stroke();
 
@@ -166,14 +187,15 @@ const drawStudentCard = async (canvas, student, settings, assets, color = '#1565
 
     ctx.font = `500 ${s(7)}px Arial`; ctx.fillStyle = '#111827';
     ctx.textBaseline = 'top';
+    const lines = wrapText(ctx, val, valMaxW);
     lines.forEach((line, li) => {
-      ctx.fillText(line, vx, ry + s(3) + li * s(9));
+      ctx.fillText(line, vx, ry + s(3) + li * lineH);
     });
 
     rsY += rowH;
   });
 
-  // ── Footer: Class + Sign ─────────────────────────────────────────────────
+  // Footer: Class + Sign
   const ftY = rsY + s(2);
   ctx.strokeStyle = '#e5e7eb'; ctx.lineWidth = s(1);
   ctx.beginPath(); ctx.moveTo(lx2, ftY); ctx.lineTo(CW - lx2, ftY); ctx.stroke();
@@ -193,12 +215,12 @@ const drawStudentCard = async (canvas, student, settings, assets, color = '#1565
     ctx.fillText('Principal Sign.', sx + sw/2, sy + sh + s(2));
   }
 
-  // ── Bottom note ───────────────────────────────────────────────────────────
-  const noteY = CH - s(16);
-  ctx.fillStyle = color; ctx.fillRect(0, noteY, CW, s(16));
+  // Bottom note
+  const noteY = CH - noteH;
+  ctx.fillStyle = color; ctx.fillRect(0, noteY, CW, noteH);
   ctx.font = `500 ${s(5.5)}px Arial`; ctx.fillStyle = 'rgba(255,255,255,0.85)';
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText(`If found, please return to school  •  Ph: ${settings.contactNumber || '—'}`, CW/2, noteY + s(8));
+  ctx.fillText(`If found, please return to school  •  Ph: ${settings.contactNumber || '—'}`, CW/2, noteY + noteH/2);
 
   ctx.restore();
 };
@@ -208,8 +230,43 @@ const drawStudentCard = async (canvas, student, settings, assets, color = '#1565
 // ════════════════════════════════════════════════════════════════════════════
 const drawTeacherCard = async (canvas, teacher, settings, assets) => {
   const { logoImg, signImg, photoImg } = assets;
-  const ctx = canvas.getContext('2d');
+
+  const hdrH   = s(72);
+  const photoW = s(96), photoH = s(106);
+  const nameH  = s(18);
+  const uidH   = s(14);
+  const lx2    = s(12), vx = lx2 + s(58), valMaxW = CW - vx - lx2;
+  const baseRH = s(15);
+  const lineH  = s(9);
+  const signH  = s(36);  // sign area
+  const stripH = s(20);  // red bottom strip
+
+  // Pre-measure rows
+  const tmp = document.createElement('canvas');
+  tmp.width = CW; tmp.height = 10;
+  const mctx = tmp.getContext('2d');
+
+  const rows = [
+    ['Designation', teacher.designation || 'Teacher'],
+    ['Phone',       teacher.phone || '—'],
+    ['Address',     teacher.address || '—'],
+  ];
+
+  mctx.font = `500 ${s(7)}px Arial`;
+  const rowHeights = rows.map(([, val]) => {
+    const lines = wrapText(mctx, val, valMaxW);
+    return lines.length > 1 ? lines.length * lineH + s(4) : baseRH;
+  });
+  const totalRowsH = rowHeights.reduce((a, b) => a + b, 0);
+
+  const photoY   = hdrH + s(8);
+  const nameY    = photoY + photoH + s(5);
+  const uidY     = nameY + nameH;
+  const rsYStart = uidY + uidH + s(5);
+  const CH = rsYStart + totalRowsH + s(4) + signH + stripH;
+
   canvas.width = CW; canvas.height = CH;
+  const ctx = canvas.getContext('2d');
 
   ctx.save();
   roundRect(ctx, 0, 0, CW, CH, s(12));
@@ -217,13 +274,11 @@ const drawTeacherCard = async (canvas, teacher, settings, assets) => {
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, CW, CH);
 
-  // ── Dark Red Header ───────────────────────────────────────────────────────
-  const hdrH = s(72);
+  // Header
   const hg = ctx.createLinearGradient(0, 0, 0, hdrH);
   hg.addColorStop(0, '#8b1a1a'); hg.addColorStop(1, '#a52020');
   ctx.fillStyle = hg; ctx.fillRect(0, 0, CW, hdrH);
 
-  // Logo
   const logoSz = s(52), lx = s(10), ly = (hdrH - logoSz) / 2;
   ctx.save();
   ctx.beginPath(); ctx.arc(lx + logoSz/2, ly + logoSz/2, logoSz/2, 0, Math.PI*2);
@@ -232,7 +287,6 @@ const drawTeacherCard = async (canvas, teacher, settings, assets) => {
   else { ctx.fillStyle = '#fff'; ctx.fillRect(lx, ly, logoSz, logoSz); }
   ctx.restore();
 
-  // School text — centered like student card
   const tx = lx + logoSz + s(8), tw = CW - tx - s(8);
   const tyStart = ly + s(4);
   ctx.textAlign = 'center'; ctx.textBaseline = 'top';
@@ -245,13 +299,12 @@ const drawTeacherCard = async (canvas, teacher, settings, assets) => {
   ctx.font = `800 ${s(7)}px Arial`; ctx.fillStyle = '#fff';
   ctx.fillText(`Phone No.: ${settings.contactNumber || '—'}`, tx + tw/2, tyStart + s(37));
 
-  // ── White body ────────────────────────────────────────────────────────────
+  // White body
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, hdrH, CW, CH - hdrH);
 
   // Photo
-  const photoW = s(96), photoH = s(106);
-  const photoX = (CW - photoW) / 2, photoY = hdrH + s(8);
+  const photoX = (CW - photoW) / 2;
   ctx.strokeStyle = '#8b1a1a'; ctx.lineWidth = s(2.5);
   ctx.strokeRect(photoX, photoY, photoW, photoH);
   ctx.save();
@@ -267,7 +320,6 @@ const drawTeacherCard = async (canvas, teacher, settings, assets) => {
   ctx.restore();
 
   // Name
-  const nameY = photoY + photoH + s(5);
   ctx.font = `900 ${s(13)}px Arial`; ctx.fillStyle = '#111827';
   ctx.textAlign = 'center'; ctx.textBaseline = 'top';
   ctx.fillText(ellipseText(ctx, teacher.name || '', CW - s(20)), CW/2, nameY);
@@ -275,31 +327,21 @@ const drawTeacherCard = async (canvas, teacher, settings, assets) => {
   // Emp ID pill
   const uidTxt = `ID: ${teacher.employeeCode || '—'}`;
   ctx.font = `800 ${s(7.5)}px Arial`;
-  const uidW = ctx.measureText(uidTxt).width + s(24), uidH = s(14);
-  const uidX = (CW - uidW) / 2, uidY = nameY + s(17);
+  const uidW = ctx.measureText(uidTxt).width + s(24);
+  const uidX = (CW - uidW) / 2;
   roundRect(ctx, uidX, uidY, uidW, uidH, s(7));
   ctx.fillStyle = '#8b1a1a'; ctx.fill();
   ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText(uidTxt, CW/2, uidY + uidH/2);
 
-  // Info rows — 3 rows including Designation
-  const rows = [
-    ['Designation', teacher.designation || 'Teacher'],
-    ['Phone',       teacher.phone || '—'],
-    ['Address',     teacher.address || '—'],
-  ];
-  const lx2 = s(12), vx = lx2 + s(58), valMaxW2 = CW - vx - lx2;
-  const rh = s(15);
-  let rsY = uidY + uidH + s(5);
-
+  // Info rows
+  let rsY = rsYStart;
   ctx.strokeStyle = '#f0e0e0'; ctx.lineWidth = s(1);
   ctx.beginPath(); ctx.moveTo(lx2, rsY); ctx.lineTo(CW - lx2, rsY); ctx.stroke();
 
-  rows.forEach(([lbl, val]) => {
-    const ry = rsY;
-    ctx.font = `500 ${s(7)}px Arial`;
-    const lines = wrapText(ctx, val, valMaxW2);
-    const rowH = lines.length > 1 ? lines.length * s(9) + s(4) : rh;
+  rows.forEach(([lbl, val], i) => {
+    const ry   = rsY;
+    const rowH = rowHeights[i];
 
     ctx.font = `700 ${s(7)}px Arial`; ctx.fillStyle = '#8b1a1a';
     ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
@@ -307,8 +349,9 @@ const drawTeacherCard = async (canvas, teacher, settings, assets) => {
 
     ctx.font = `500 ${s(7)}px Arial`; ctx.fillStyle = '#111827';
     ctx.textBaseline = 'top';
+    const lines = wrapText(ctx, val, valMaxW);
     lines.forEach((line, li) => {
-      ctx.fillText(line, vx, ry + s(3) + li * s(9));
+      ctx.fillText(line, vx, ry + s(3) + li * lineH);
     });
 
     ctx.strokeStyle = '#f5e0e0'; ctx.lineWidth = s(1);
@@ -316,7 +359,7 @@ const drawTeacherCard = async (canvas, teacher, settings, assets) => {
     rsY += rowH;
   });
 
-  // ── Principal Sign ────────────────────────────────────────────────────────
+  // Principal Sign
   const ftY = rsY + s(4);
   ctx.strokeStyle = '#f0e0e0'; ctx.lineWidth = s(1);
   ctx.beginPath(); ctx.moveTo(lx2, ftY); ctx.lineTo(CW - lx2, ftY); ctx.stroke();
@@ -331,12 +374,12 @@ const drawTeacherCard = async (canvas, teacher, settings, assets) => {
     ctx.fillText('Principal Sign.', sx + sw/2, sy + sh + s(2));
   }
 
-  // ── Red bottom strip ──────────────────────────────────────────────────────
-  const stY = CH - s(20);
-  ctx.fillStyle = '#8b1a1a'; ctx.fillRect(0, stY, CW, s(20));
+  // Red bottom strip
+  const stY = CH - stripH;
+  ctx.fillStyle = '#8b1a1a'; ctx.fillRect(0, stY, CW, stripH);
   ctx.font = `900 ${s(11)}px Arial`; ctx.fillStyle = '#fff';
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText('STAFF ID CARD', CW/2, stY + s(10));
+  ctx.fillText('STAFF ID CARD', CW/2, stY + stripH/2);
 
   ctx.restore();
 };
