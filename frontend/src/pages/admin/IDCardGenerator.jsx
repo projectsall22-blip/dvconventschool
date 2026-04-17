@@ -27,7 +27,7 @@ const StudentCard = ({ student, settings, color = '#1565c0' }) => {
   const Row = ({ label, value }) => (
     <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', padding: '3px 0' }}>
       <span style={{ fontSize: 7, color: '#374151', fontWeight: 600, width: 62, flexShrink: 0 }}>{label}</span>
-      <span style={{ fontSize: 7, color: '#111827', fontWeight: 500, flex: 1, wordBreak: 'break-word', overflowWrap: 'break-word' }}>{value || '—'}</span>
+      <span style={{ fontSize: 7, color: '#111827', fontWeight: 500, flex: 1, wordBreak: 'break-word', overflowWrap: 'anywhere' }}>{value || '—'}</span>
     </div>
   );
 

@@ -36,9 +36,12 @@ const ellipseText = (ctx, text, maxW) => {
 };
 
 // Word-wrap text into lines that fit maxW
+// Splits on spaces and after commas so comma-separated addresses also wrap
 const wrapText = (ctx, text, maxW) => {
   if (!text) return ['—'];
-  const words = String(text).split(' ');
+  // tokenize: split on spaces, but also break after commas
+  const raw = String(text).replace(/,/g, ', ').replace(/\s+/g, ' ').trim();
+  const words = raw.split(' ');
   const lines = [];
   let line = '';
   for (const word of words) {
