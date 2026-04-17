@@ -5,6 +5,8 @@
  * Opens print dialog → Save as PDF
  */
 
+import defaultLogoUrl from '../assets/school_logo.png';
+
 const fmtAmt = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
 const fmtDate = (d) => d
     ? new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' })
@@ -217,11 +219,7 @@ export async function downloadFeeReceipt(receiptData) {
     // Try settings logo first, then fallback to bundled asset
     let logoBase64 = await toBase64(receiptData.schoolLogo);
     if (!logoBase64) {
-        // fetch the bundled asset (works in dev & prod via Vite)
-        try {
-            const mod = await import('../assets/school_logo.png');
-            logoBase64 = await toBase64(mod.default);
-        } catch { logoBase64 = null; }
+        logoBase64 = await toBase64(defaultLogoUrl);
     }
 
     const dataWithLogo = { ...receiptData, schoolLogo: logoBase64 };
