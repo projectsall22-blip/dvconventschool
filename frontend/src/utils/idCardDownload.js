@@ -37,6 +37,25 @@ const ellipseText = (ctx, text, maxW) => {
   return t;
 };
 
+// Wraps text into multiple lines fitting maxW, returns array of lines
+const wrapText = (ctx, text, maxW) => {
+  if (!text) return ['—'];
+  const words = String(text).split(' ');
+  const lines = [];
+  let line = '';
+  for (const word of words) {
+    const test = line ? line + ' ' + word : word;
+    if (ctx.measureText(test).width > maxW && line) {
+      lines.push(line);
+      line = word;
+    } else {
+      line = test;
+    }
+  }
+  if (line) lines.push(line);
+  return lines.length ? lines : ['—'];
+};
+
 const fmtDate = (d) => d
   ? new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
   : '—';
@@ -127,21 +146,35 @@ const drawStudentCard = async (canvas, student, settings, assets, color = '#1565
     ['Contact No.',   student.fatherMobile || student.guardianMobile || '—'],
     ['Add.',          student.address || '—'],
   ];
-  const rsY = uidY + uidH + s(5), rh = s(14), lx2 = s(12), vx = lx2 + s(62);
+  const lx2 = s(12), vx = lx2 + s(62), valMaxW = CW - vx - lx2;
+  const rh = s(14);
+  let rsY = uidY + uidH + s(5);
+
   rows.forEach(([lbl, val], i) => {
-    const ry = rsY + i * rh;
+    const ry = rsY;
+    ctx.font = `500 ${s(7)}px Arial`;
+    const lines = wrapText(ctx, val, valMaxW);
+    const rowH = lines.length > 1 ? lines.length * s(9) + s(4) : rh;
+
     // divider
     ctx.strokeStyle = '#e5e7eb'; ctx.lineWidth = s(1);
     ctx.beginPath(); ctx.moveTo(lx2, ry); ctx.lineTo(CW - lx2, ry); ctx.stroke();
+
     ctx.font = `600 ${s(7)}px Arial`; ctx.fillStyle = '#374151';
     ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-    ctx.fillText(lbl, lx2, ry + rh/2);
+    ctx.fillText(lbl, lx2, ry + rowH / 2);
+
     ctx.font = `500 ${s(7)}px Arial`; ctx.fillStyle = '#111827';
-    ctx.fillText(ellipseText(ctx, val, CW - vx - lx2), vx, ry + rh/2);
+    ctx.textBaseline = 'top';
+    lines.forEach((line, li) => {
+      ctx.fillText(line, vx, ry + s(3) + li * s(9));
+    });
+
+    rsY += rowH;
   });
 
   // ── Footer: Class + Sign ─────────────────────────────────────────────────
-  const ftY = rsY + rows.length * rh + s(2);
+  const ftY = rsY + s(2);
   ctx.strokeStyle = '#e5e7eb'; ctx.lineWidth = s(1);
   ctx.beginPath(); ctx.moveTo(lx2, ftY); ctx.lineTo(CW - lx2, ftY); ctx.stroke();
 
@@ -255,22 +288,36 @@ const drawTeacherCard = async (canvas, teacher, settings, assets) => {
     ['Phone',       teacher.phone || '—'],
     ['Address',     teacher.address || '—'],
   ];
-  const rsY = uidY + uidH + s(5), rh = s(15), lx2 = s(12), vx = lx2 + s(58);
+  const lx2 = s(12), vx = lx2 + s(58), valMaxW2 = CW - vx - lx2;
+  const rh = s(15);
+  let rsY = uidY + uidH + s(5);
+
   ctx.strokeStyle = '#f0e0e0'; ctx.lineWidth = s(1);
   ctx.beginPath(); ctx.moveTo(lx2, rsY); ctx.lineTo(CW - lx2, rsY); ctx.stroke();
-  rows.forEach(([lbl, val], i) => {
-    const ry = rsY + i * rh;
+
+  rows.forEach(([lbl, val]) => {
+    const ry = rsY;
+    ctx.font = `500 ${s(7)}px Arial`;
+    const lines = wrapText(ctx, val, valMaxW2);
+    const rowH = lines.length > 1 ? lines.length * s(9) + s(4) : rh;
+
     ctx.font = `700 ${s(7)}px Arial`; ctx.fillStyle = '#8b1a1a';
     ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-    ctx.fillText(`${lbl}:`, lx2, ry + rh/2);
+    ctx.fillText(`${lbl}:`, lx2, ry + rowH / 2);
+
     ctx.font = `500 ${s(7)}px Arial`; ctx.fillStyle = '#111827';
-    ctx.fillText(ellipseText(ctx, val, CW - vx - lx2), vx, ry + rh/2);
+    ctx.textBaseline = 'top';
+    lines.forEach((line, li) => {
+      ctx.fillText(line, vx, ry + s(3) + li * s(9));
+    });
+
     ctx.strokeStyle = '#f5e0e0'; ctx.lineWidth = s(1);
-    ctx.beginPath(); ctx.moveTo(lx2, ry + rh); ctx.lineTo(CW - lx2, ry + rh); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(lx2, ry + rowH); ctx.lineTo(CW - lx2, ry + rowH); ctx.stroke();
+    rsY += rowH;
   });
 
   // ── Principal Sign ────────────────────────────────────────────────────────
-  const ftY = rsY + rows.length * rh + s(4);
+  const ftY = rsY + s(4);
   ctx.strokeStyle = '#f0e0e0'; ctx.lineWidth = s(1);
   ctx.beginPath(); ctx.moveTo(lx2, ftY); ctx.lineTo(CW - lx2, ftY); ctx.stroke();
   if (signImg) {
