@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom';
 import { X } from 'lucide-react';
 import { navConfig } from '../../utils/navConfig';
 import { useSettings } from '../../context/SettingsContext';
+import schoolLogo from '../../assets/school_logo.png';
 
 const Sidebar = ({ role = 'admin', isMobileOpen, onMobileClose }) => {
   const menuItems = navConfig[role] || [];
@@ -19,7 +20,9 @@ const Sidebar = ({ role = 'admin', isMobileOpen, onMobileClose }) => {
     <div className="flex flex-col h-full bg-white">
       <div className="p-6 flex items-center justify-between md:hidden border-b border-gray-50">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-bold">DV</div>
+          <div className="w-8 h-8 rounded-lg overflow-hidden border border-gray-200 flex items-center justify-center bg-white">
+            <img src={settings.schoolLogo || schoolLogo} alt="logo" className="w-full h-full object-cover" />
+          </div>
           <span className="font-bold text-gray-800">Menu</span>
         </div>
         <button onClick={onMobileClose} className="p-2 hover:bg-gray-100 rounded-full text-gray-400">
