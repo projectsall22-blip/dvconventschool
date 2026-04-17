@@ -32,10 +32,8 @@ function buildCopy(data, copyLabel) {
     const grandTotal = payments.reduce((s, p) => s + p.amountPaid, 0);
     const months = payments.map(p => p.month || 'General').join(', ');
 
-    // Logo: use base64 from settings, or fallback to local asset
-    const logoSrc = schoolLogo
-        ? (schoolLogo.startsWith('data:') ? schoolLogo : `data:image/png;base64,${schoolLogo}`)
-        : '/src/assets/school_logo.png';
+    // Logo: already base64 (converted before calling buildCopy)
+    const logoSrc = schoolLogo || null;
 
     // Build fee rows — one per month with sub-rows for components
     let slNo = 1;
@@ -78,7 +76,7 @@ function buildCopy(data, copyLabel) {
 
         <!-- Header -->
         <div class="header">
-            <img src="${logoSrc}" class="logo" alt="Logo" onerror="this.style.display='none'" />
+            ${logoSrc ? `<img src="${logoSrc}" class="logo" alt="Logo" />` : ''}
             <div class="school-info">
                 <div class="school-name">${schoolName || 'DV Convent School'}</div>
                 <div class="school-sub">${schoolAddress || 'Akodha, Rohi, Bhadohi - 221308'}</div>
@@ -195,9 +193,41 @@ function buildCopy(data, copyLabel) {
     </div>`;
 }
 
-export function downloadFeeReceipt(receiptData) {
-    const schoolCopy  = buildCopy(receiptData, 'SCHOOL COPY');
-    const parentCopy  = buildCopy(receiptData, 'PARENT COPY');
+export async function downloadFeeReceipt(receiptData) {
+    // Convert logo URL → base64 so it works in the new window
+    const apiBase = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL)
+        ? import.meta.env.VITE_API_URL.replace('/api', '')
+        : '';
+
+    async function toBase64(src) {
+        if (!src) return null;
+        if (src.startsWith('data:')) return src;
+        const url = src.startsWith('http') ? src : `${apiBase}${src}`;
+        try {
+            const res  = await fetch(url);
+            const blob = await res.blob();
+            return await new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.readAsDataURL(blob);
+            });
+        } catch { return null; }
+    }
+
+    // Try settings logo first, then fallback to bundled asset
+    let logoBase64 = await toBase64(receiptData.schoolLogo);
+    if (!logoBase64) {
+        // fetch the bundled asset (works in dev & prod via Vite)
+        try {
+            const mod = await import('../assets/school_logo.png');
+            logoBase64 = await toBase64(mod.default);
+        } catch { logoBase64 = null; }
+    }
+
+    const dataWithLogo = { ...receiptData, schoolLogo: logoBase64 };
+
+    const schoolCopy  = buildCopy(dataWithLogo, 'SCHOOL COPY');
+    const parentCopy  = buildCopy(dataWithLogo, 'PARENT COPY');
 
     const html = `<!DOCTYPE html>
 <html>
