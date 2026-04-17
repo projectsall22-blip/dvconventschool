@@ -238,7 +238,7 @@ export async function downloadFeeReceipt(receiptData) {
 * { margin:0; padding:0; box-sizing:border-box; }
 
 @page {
-    size: 8.2in 5.8in;
+    size: 8.5in 5.8in;
     margin: 0;
 }
 
@@ -253,8 +253,10 @@ body {
 
 .page {
     display: flex;
-    width: 8.2in;
+    width: 8.5in;
     height: 5.8in;
+    align-items: stretch;
+    gap: 0;
 }
 
 /* ── Single receipt copy ── */
@@ -263,12 +265,18 @@ body {
     height: 5.8in;
     display: flex;
     flex-direction: column;
-    border-right: 1px dashed #aaa;
     position: relative;
     overflow: hidden;
     background: #fff;
 }
-.receipt:last-child { border-right: none; }
+.receipt:first-child {
+    border-right: 2px dashed #999;
+    margin-right: 0.1in;
+    padding-right: 0.05in;
+}
+.receipt:last-child {
+    padding-left: 0.05in;
+}
 
 /* Decorative stripes */
 .top-stripe {
