@@ -76,7 +76,7 @@ const drawStudentCard = async (canvas, student, settings, assets, color = '#1565
   const lx2    = s(12), vx = lx2 + s(62), valMaxW = CW - vx - lx2;
   const baseRH = s(14);   // single-line row height (matches preview padding: 3px top+bottom + 7px font ≈ 14)
   const lineH  = s(9);    // per extra line height inside a wrapped row
-  const ftH    = s(32);   // footer (class + sign area)
+  const ftH    = s(42);   // footer (class + sign area) — increased to fit sign + label
   const noteH  = s(16);   // bottom strip
 
   // ── Pre-measure rows to get dynamic height ────────────────────────────────
