@@ -238,7 +238,7 @@ export async function downloadFeeReceipt(receiptData) {
 * { margin:0; padding:0; box-sizing:border-box; }
 
 @page {
-    size: 8.5in 5.8in;
+    size: A4 portrait;
     margin: 0;
 }
 
@@ -249,58 +249,59 @@ body {
     color: #1a1a2e;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+    width: 210mm;
+    height: 297mm;
 }
 
+/* A4 page — top half only */
 .page {
     display: flex;
-    width: 8.5in;
-    height: 5.8in;
-    align-items: stretch;
-    gap: 0;
+    flex-direction: row;
+    width: 210mm;
+    height: 148.5mm;   /* exactly half of A4 */
+    border-bottom: 2px dashed #999;
 }
 
 /* ── Single receipt copy ── */
 .receipt {
-    width: 4.1in;
-    height: 5.8in;
+    width: 50%;
+    height: 148.5mm;
     display: flex;
     flex-direction: column;
-    position: relative;
     overflow: hidden;
     background: #fff;
+    padding: 4mm 5mm;
 }
 .receipt:first-child {
-    border-right: 2px dashed #999;
-    margin-right: 0.1in;
-    padding-right: 0.05in;
-}
-.receipt:last-child {
-    padding-left: 0.05in;
+    border-right: 1.5px dashed #bbb;
 }
 
 /* Decorative stripes */
 .top-stripe {
-    height: 6px;
+    height: 5px;
     background: linear-gradient(90deg, #0F2044 0%, #1E40AF 50%, #0F2044 100%);
+    flex-shrink: 0;
 }
 .bottom-stripe {
-    height: 4px;
+    height: 3px;
     background: linear-gradient(90deg, #0F2044 0%, #1E40AF 50%, #0F2044 100%);
     margin-top: auto;
+    flex-shrink: 0;
 }
 
 /* Header */
 .header {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 7px 8px 7px;
+    gap: 6px;
+    padding: 4px 0 4px;
     border-bottom: 2px solid #0F2044;
     background: linear-gradient(135deg, #f8faff 0%, #eff6ff 100%);
+    flex-shrink: 0;
 }
 .logo {
-    width: 52px;
-    height: 52px;
+    width: 40px;
+    height: 40px;
     object-fit: contain;
     border-radius: 50%;
     border: 2px solid #1E40AF;
@@ -309,21 +310,22 @@ body {
 }
 .school-info { flex: 1; text-align: center; }
 .school-name {
-    font-size: 15pt;
+    font-size: 11pt;
     font-weight: bold;
     color: #0F2044;
     letter-spacing: 0.3px;
-    line-height: 1.3;
+    line-height: 1.2;
 }
-.school-sub { font-size: 8.5pt; color: #444; margin-top: 3px; line-height: 1.4; }
+.school-sub { font-size: 7pt; color: #444; margin-top: 2px; line-height: 1.3; }
 
 /* Receipt title */
 .receipt-title {
     display: flex;
     align-items: center;
     gap: 6px;
-    padding: 3px 8px;
+    padding: 2px 0;
     background: #0F2044;
+    flex-shrink: 0;
 }
 .title-line {
     flex: 1;
@@ -332,7 +334,7 @@ body {
 }
 .title-text {
     color: #fff;
-    font-size: 8pt;
+    font-size: 7pt;
     font-weight: bold;
     letter-spacing: 2px;
     white-space: nowrap;
@@ -342,11 +344,10 @@ body {
 .info-grid {
     width: 100%;
     border-collapse: collapse;
-    font-size: 8.5pt;
-    padding: 0 8px;
-    margin: 3px 0;
+    font-size: 7.5pt;
+    margin: 2px 0;
 }
-.info-grid td { padding: 1.5px 4px; }
+.info-grid td { padding: 1px 3px; }
 .info-grid .lbl { font-weight: bold; color: #0F2044; width: 18%; white-space: nowrap; }
 .info-grid .colon { width: 3%; color: #666; }
 .info-grid .val { color: #222; }
@@ -354,31 +355,31 @@ body {
 
 /* Fee table */
 .fee-table {
-    width: calc(100% - 16px);
-    margin: 0 8px;
+    width: 100%;
     border-collapse: collapse;
-    font-size: 8.5pt;
+    font-size: 7.5pt;
+    margin: 2px 0;
 }
 .fee-table thead tr {
     background: linear-gradient(90deg, #0F2044, #1E40AF);
     color: #fff;
 }
 .fee-table th {
-    padding: 3px 4px;
-    font-size: 8pt;
+    padding: 2px 3px;
+    font-size: 7pt;
     font-weight: bold;
     letter-spacing: 0.3px;
 }
 .fee-table td {
-    padding: 2.5px 4px;
+    padding: 2px 3px;
     border-bottom: 1px solid #eee;
 }
 .fee-table .month-main { background: #f0f4ff; }
-.fee-table .month-main td { font-size: 8.5pt; }
-.fee-table .month-sub td { font-size: 7.5pt; color: #555; border-bottom: 1px dotted #eee; }
-.fee-table .sub-desc { padding-left: 10px; }
+.fee-table .month-main td { font-size: 7.5pt; }
+.fee-table .month-sub td { font-size: 7pt; color: #555; border-bottom: 1px dotted #eee; }
+.fee-table .sub-desc { padding-left: 8px; }
 .fee-table .sub-amt { color: #444; }
-.fee-table .pad-row td { height: 13px; }
+.fee-table .pad-row td { height: 10px; }
 .fee-table .paid-col { color: #0F2044; font-weight: bold; }
 .tc { text-align: center; }
 .tr { text-align: right; }
@@ -388,75 +389,78 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin: 3px 8px 0;
-    padding: 4px 8px;
+    margin: 2px 0 0;
+    padding: 3px 6px;
     background: linear-gradient(90deg, #0F2044, #1E40AF);
     color: #fff;
-    font-size: 8.5pt;
+    font-size: 7.5pt;
     font-weight: bold;
     border-radius: 2px;
+    flex-shrink: 0;
 }
-.total-amt { font-size: 10pt; letter-spacing: 0.5px; }
+.total-amt { font-size: 8.5pt; letter-spacing: 0.5px; }
 
 /* Words */
 .words-row {
-    margin: 2px 8px;
-    padding: 2px 6px;
+    margin: 2px 0;
+    padding: 2px 5px;
     background: #f8faff;
     border: 1px solid #dbeafe;
     border-radius: 2px;
-    font-size: 8pt;
+    font-size: 7pt;
     display: flex;
     gap: 4px;
     flex-wrap: wrap;
+    flex-shrink: 0;
 }
 .words-label { font-weight: bold; color: #0F2044; white-space: nowrap; }
 .words-text { color: #333; font-style: italic; }
 
 /* Pay mode */
 .pay-mode-row {
-    margin: 2px 8px;
-    padding: 2px 6px;
+    margin: 2px 0;
+    padding: 2px 5px;
     background: #f0fdf4;
     border: 1px solid #bbf7d0;
     border-radius: 2px;
-    font-size: 8pt;
+    font-size: 7pt;
     display: flex;
-    gap: 10px;
+    gap: 8px;
     flex-wrap: wrap;
     color: #166534;
+    flex-shrink: 0;
 }
 
 /* Footer */
 .footer {
-    margin: 3px 8px 2px;
-    padding: 3px 6px 2px;
+    padding: 2px 0;
     margin-top: auto;
+    flex-shrink: 0;
 }
 .sig-area {
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
-    margin-top: 8px;
-    padding-top: 4px;
+    margin-top: 4px;
+    padding-top: 3px;
 }
 .sig-block {
     text-align: center;
 }
 .sig-line {
-    width: 90px;
+    width: 80px;
     height: 1px;
     background: #0F2044;
     margin-bottom: 2px;
 }
 .sig-label {
-    font-size: 7pt;
+    font-size: 6.5pt;
     color: #333;
     font-weight: bold;
 }
 .copy-label {
     font-weight: bold;
-    font-size: 9pt;
+    font-size: 8pt;
     color: #0F2044;
     letter-spacing: 2px;
     text-align: right;
@@ -466,10 +470,10 @@ body {
 }
 .footer-note {
     text-align: center;
-    font-size: 6.5pt;
+    font-size: 6pt;
     color: #999;
     font-style: italic;
-    margin-top: 4px;
+    margin-top: 3px;
 }
 
 @media print {
