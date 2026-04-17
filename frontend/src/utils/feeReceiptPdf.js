@@ -308,8 +308,8 @@ body {
     flex-shrink: 0;
 }
 .logo {
-    width: 40px;
-    height: 40px;
+    width: 55px;
+    height: 55px;
     object-fit: contain;
     border-radius: 50%;
     border: 2px solid #1E40AF;
