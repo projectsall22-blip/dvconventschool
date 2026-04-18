@@ -50,7 +50,6 @@ function buildCopy(data, copyLabel) {
                 <td class="tc">${slNo++}</td>
                 <td><b>${p.month || 'General'} Fee</b></td>
                 <td class="tr">${fmtAmt(p.totalAmount)}</td>
-                <td class="tc">0</td>
                 <td class="tr paid-col">${fmtAmt(p.amountPaid + (p.discount || 0))}</td>
             </tr>`;
 
@@ -59,7 +58,7 @@ function buildCopy(data, copyLabel) {
                 <td></td>
                 <td class="sub-desc">↳ ${fc.name}</td>
                 <td class="tr sub-amt">${fmtAmt(fc.amount)}</td>
-                <td></td><td></td>
+                <td></td>
             </tr>`).join('') : '';
 
         return mainRow + subRows;
@@ -68,7 +67,7 @@ function buildCopy(data, copyLabel) {
     // Pad to min 5 data rows
     const dataRowCount = payments.length + payments.reduce((s, p) => s + (p.feeComponents?.length || 0), 0);
     const padRows = Array(Math.max(0, 5 - dataRowCount)).fill(
-        `<tr class="pad-row"><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>`
+        `<tr class="pad-row"><td>&nbsp;</td><td></td><td></td><td></td></tr>`
     ).join('');
 
     return `
@@ -143,10 +142,9 @@ function buildCopy(data, copyLabel) {
             <thead>
                 <tr>
                     <th style="width:7%">#</th>
-                    <th style="width:45%;text-align:left">Description</th>
-                    <th style="width:16%;text-align:right">Due</th>
-                    <th style="width:12%;text-align:center">Disc.</th>
-                    <th style="width:20%;text-align:right">Paid</th>
+                    <th style="width:57%;text-align:left">Description</th>
+                    <th style="width:20%;text-align:right">Due</th>
+                    <th style="width:16%;text-align:right">Amount</th>
                 </tr>
             </thead>
             <tbody>
