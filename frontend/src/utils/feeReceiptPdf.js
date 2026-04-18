@@ -29,7 +29,8 @@ function toWords(num) {
 
 function buildCopy(data, copyLabel) {
     const { student, payments, groupReceiptNo, academicYear, collectedAt,
-            schoolName, schoolAddress, schoolPhone, schoolLogo } = data;
+            schoolName, schoolAddress, schoolPhone, schoolLogo,
+            discount: totalDiscount, fine: totalFine } = data;
 
     const grandTotal = payments.reduce((s, p) => s + p.amountPaid, 0);
     const months = payments.map(p => p.month || 'General').join(', ');
@@ -49,7 +50,7 @@ function buildCopy(data, copyLabel) {
                 <td class="tc">${slNo++}</td>
                 <td><b>${p.month || 'General'} Fee</b></td>
                 <td class="tr">${fmtAmt(p.totalAmount)}</td>
-                <td class="tc">${p.discount > 0 ? fmtAmt(p.discount) : '0'}</td>
+                <td class="tc">${(p.discount > 0 || totalDiscount > 0) ? fmtAmt(p.discount || totalDiscount) : '0'}</td>
                 <td class="tr paid-col">${fmtAmt(p.amountPaid)}</td>
             </tr>`;
 
@@ -159,6 +160,13 @@ function buildCopy(data, copyLabel) {
             <span>Total Amount Paid</span>
             <span class="total-amt">${fmtAmt(grandTotal)}</span>
         </div>
+
+        <!-- Discount / Fine summary -->
+        ${(totalDiscount > 0 || totalFine > 0) ? `
+        <div class="disc-row">
+            ${totalDiscount > 0 ? `<span>Discount: <b style="color:#166534">- ${fmtAmt(totalDiscount)}</b></span>` : ''}
+            ${totalFine > 0 ? `<span>Fine: <b style="color:#991b1b">+ ${fmtAmt(totalFine)}</b></span>` : ''}
+        </div>` : ''}
 
         <!-- Amount in words -->
         <div class="words-row">
@@ -407,6 +415,20 @@ body {
     flex-shrink: 0;
 }
 .total-amt { font-size: 8.5pt; letter-spacing: 0.5px; }
+
+/* Discount/Fine row */
+.disc-row {
+    margin: 2px 0;
+    padding: 2px 6px;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 2px;
+    font-size: 7.5pt;
+    display: flex;
+    gap: 12px;
+    flex-shrink: 0;
+    color: #374151;
+}
 
 /* Words */
 .words-row {

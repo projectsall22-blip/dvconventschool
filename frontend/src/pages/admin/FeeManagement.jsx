@@ -61,7 +61,7 @@ const StatCard = ({ icon: Icon, label, value, sub, gradient, onClick }) => (
    RECEIPT MODAL  —  redesigned, compact, half-A4 printable
 ───────────────────────────────────────────────────────────────────────────── */
 const ReceiptModal = ({ receiptData, onClose }) => {
-    const { student, payments, academicYear, collectedAt, groupReceiptNo } = receiptData;
+    const { student, payments, academicYear, collectedAt, groupReceiptNo, discount, fine } = receiptData;
     const [downloading, setDownloading] = useState(false);
     const receiptDisplay = groupReceiptNo || payments[0]?.receiptNo || '—';
     const { settings }   = useSettings();
@@ -74,6 +74,8 @@ const ReceiptModal = ({ receiptData, onClose }) => {
                 student, payments,
                 groupReceiptNo: receiptDisplay,
                 academicYear, collectedAt,
+                discount: discount || 0,
+                fine: fine || 0,
                 schoolName:    settings?.schoolName,
                 schoolAddress: settings?.schoolAddress,
                 schoolPhone:   settings?.contactNumber,
@@ -225,6 +227,8 @@ const CollectFeeModal = ({ onClose, onSuccess, academicYear, structures }) => {
                 groupReceiptNo: res.data.groupReceiptNo || res.data.payments?.[0]?.receiptNo || '',
                 academicYear,
                 collectedAt: new Date().toISOString(),
+                discount: Number(form.discount || 0),
+                fine: Number(form.fine || 0),
             });
             onSuccess(`Fee collected for ${monthsArr.length} month${monthsArr.length > 1 ? 's' : ''}`);
         } catch (err) {
