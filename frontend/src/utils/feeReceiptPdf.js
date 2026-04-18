@@ -50,8 +50,8 @@ function buildCopy(data, copyLabel) {
                 <td class="tc">${slNo++}</td>
                 <td><b>${p.month || 'General'} Fee</b></td>
                 <td class="tr">${fmtAmt(p.totalAmount)}</td>
-                <td class="tc">${(p.discount > 0 || totalDiscount > 0) ? fmtAmt(p.discount || totalDiscount) : '0'}</td>
-                <td class="tr paid-col">${fmtAmt(p.amountPaid)}</td>
+                <td class="tc">0</td>
+                <td class="tr paid-col">${fmtAmt(p.amountPaid + (p.discount || 0))}</td>
             </tr>`;
 
         const subRows = components.length > 0 ? components.map(fc => `
@@ -156,17 +156,28 @@ function buildCopy(data, copyLabel) {
         </table>
 
         <!-- Total bar -->
+        <div class="total-bar" style="background:linear-gradient(90deg,#1a3a6b,#2563eb);">
+            <span>Total Due</span>
+            <span class="total-amt">${fmtAmt(grandTotal + (totalDiscount || 0))}</span>
+        </div>
+
+        <!-- Discount / Fine rows -->
+        ${totalDiscount > 0 ? `
+        <div class="disc-row" style="background:#f0fdf4;border:1px solid #bbf7d0;">
+            <span style="color:#374151;">Discount</span>
+            <span style="color:#166534;font-weight:bold;margin-left:auto;">- ${fmtAmt(totalDiscount)}</span>
+        </div>` : ''}
+        ${totalFine > 0 ? `
+        <div class="disc-row" style="background:#fff5f5;border:1px solid #fecaca;">
+            <span style="color:#374151;">Fine</span>
+            <span style="color:#991b1b;font-weight:bold;margin-left:auto;">+ ${fmtAmt(totalFine)}</span>
+        </div>` : ''}
+
+        <!-- Net paid bar -->
         <div class="total-bar">
             <span>Total Amount Paid</span>
             <span class="total-amt">${fmtAmt(grandTotal)}</span>
         </div>
-
-        <!-- Discount / Fine summary -->
-        ${(totalDiscount > 0 || totalFine > 0) ? `
-        <div class="disc-row">
-            ${totalDiscount > 0 ? `<span>Discount: <b style="color:#166534">- ${fmtAmt(totalDiscount)}</b></span>` : ''}
-            ${totalFine > 0 ? `<span>Fine: <b style="color:#991b1b">+ ${fmtAmt(totalFine)}</b></span>` : ''}
-        </div>` : ''}
 
         <!-- Amount in words -->
         <div class="words-row">
@@ -418,16 +429,13 @@ body {
 
 /* Discount/Fine row */
 .disc-row {
-    margin: 2px 0;
-    padding: 2px 6px;
-    background: #f0fdf4;
-    border: 1px solid #bbf7d0;
+    margin: 1px 0;
+    padding: 3px 6px;
     border-radius: 2px;
     font-size: 7.5pt;
     display: flex;
-    gap: 12px;
+    align-items: center;
     flex-shrink: 0;
-    color: #374151;
 }
 
 /* Words */
