@@ -184,9 +184,11 @@ const CollectFeeModal = ({ onClose, onSuccess, academicYear, structures }) => {
             }
         });
     }
-    // Auto-add bus fee if student is assigned to a route
+    // Auto-add bus fee if student is assigned to a route (skip June)
     if (busRoute?.monthlyFee > 0) {
-        MONTHS.forEach(m => { monthFeeMap[m] += busRoute.monthlyFee; });
+        MONTHS.forEach(m => {
+            if (m !== 'June') monthFeeMap[m] += busRoute.monthlyFee;
+        });
     }
 
     const toggleMonth = (m) => {
