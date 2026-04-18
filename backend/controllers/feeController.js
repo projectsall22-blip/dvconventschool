@@ -56,10 +56,16 @@ const collectFee = async (req, res) => {
     const groupReceiptNo = String(count + 1).padStart(4, '0');
 
     const createdPayments = [];
-    for (const m of monthList) {
+    const totalDiscount = discount || 0;
+    const totalFine     = fine || 0;
+
+    for (let idx = 0; idx < monthList.length; idx++) {
+        const m = monthList[idx];
         const perMonthTotal = monthAmounts?.[m] ?? Math.round((totalAmount / monthList.length) * 100) / 100;
-        const perMonthDiscount = monthList.length > 1 ? 0 : (discount || 0);
-        const perMonthFine     = monthList.length > 1 ? 0 : (fine || 0);
+
+        // Apply full discount/fine on first month only (to keep it simple and visible)
+        const perMonthDiscount = idx === 0 ? totalDiscount : 0;
+        const perMonthFine     = idx === 0 ? totalFine : 0;
         const perMonthNet      = perMonthTotal - perMonthDiscount + perMonthFine;
         const status = perMonthNet > 0 ? 'paid' : 'pending';
 
@@ -87,16 +93,7 @@ const collectFee = async (req, res) => {
         createdPayments.push(payment);
     }
 
-    // For single month, apply discount/fine correctly
-    if (monthList.length === 1) {
-        const p = createdPayments[0];
-        const net = p.totalAmount - (discount || 0) + (fine || 0);
-        p.discount = discount || 0;
-        p.fine = fine || 0;
-        p.amountPaid = net;
-        p.status = net >= p.totalAmount ? 'paid' : net > 0 ? 'partial' : 'pending';
-        await p.save();
-    }
+    // amountPaid is already correctly calculated per month in the loop above
 
     await createdPayments[0].populate('student', 'name class admissionNo UID');
     res.status(201).json({ payments: createdPayments, count: createdPayments.length, student: createdPayments[0].student, groupReceiptNo });
